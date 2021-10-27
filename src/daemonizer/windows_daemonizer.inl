@@ -124,7 +124,7 @@ namespace daemonizer
       }
       else
       {
-        return tools::get_default_data_dir();
+        return tools::get_default_data_dir(false);
       }
     }
     else

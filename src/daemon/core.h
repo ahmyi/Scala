@@ -37,6 +37,7 @@
 #include "misc_log_ex.h"
 #include "daemon/command_line_args.h"
 #include "rapidjson/document.h"
+#include "common/util.h"
 #include "common/command_line.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
@@ -76,9 +77,16 @@ public:
     , m_vm_HACK{vm}
   {
     //initialize core here
- if(!(command_line::has_arg(vm, cryptonote::arg_disable_ipfs))){
-      MGINFO("Initializing IPFS...");
-      const char* IPFSstartMessage = IPFSStartNode((char*)"./");
+    MGINFO("Initializing core...");
+    if(!(command_line::has_arg(vm, cryptonote::arg_disable_ipfs))){
+      std::string ipfsPath = command_line::get_arg(vm, cryptonote::arg_ipfs_data_dir);
+      uint64_t ipfsPort = command_line::get_arg(vm, cryptonote::arg_ipfs_port);
+
+      MGINFO("Initializing IPFS on port " << ipfsPort <<", at " << ipfsPath);
+      char* cIpfsPath = (char*)(ipfsPath.data());
+
+      const char* IPFSstartMessage = IPFSStartNode(cIpfsPath, ipfsPort);
+
       Document startMessage;
       startMessage.Parse(IPFSstartMessage);
       std::string parsedMessage = startMessage["Message"].GetString();
@@ -95,7 +103,7 @@ public:
       }
 
       else{
-        MGINFO("Could not initialize IPFS...");
+        MGINFO("Could not initialize IPFS..." << parsedMessage);
         m_core.graceful_exit();
       }
     }else{

@@ -73,6 +73,8 @@ namespace cryptonote
   extern const command_line::arg_descriptor<difficulty_type> arg_fixed_difficulty;
   extern const command_line::arg_descriptor<bool> arg_offline;
   extern const command_line::arg_descriptor<bool> arg_disable_ipfs;
+  extern const command_line::arg_descriptor<std::string, false, true, 2> arg_ipfs_data_dir;
+  extern const command_line::arg_descriptor<uint64_t> arg_ipfs_port;
   extern const command_line::arg_descriptor<size_t> arg_block_download_max_size;
   extern const command_line::arg_descriptor<bool> arg_sync_pruned_blocks;
 
@@ -1110,6 +1112,7 @@ namespace cryptonote
      std::atomic_flag m_checkpoints_updating; //!< set if checkpoints are currently updating to avoid multiple threads attempting to update at once
      bool m_disable_dns_checkpoints;
      bool m_disable_ipfs;
+     std::string m_ipfs_data_dir;
 
      size_t block_sync_size;
 

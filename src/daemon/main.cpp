@@ -262,7 +262,6 @@ int main(int argc, char const * argv[])
     // FIXME: not sure on windows implementation default, needs further review
     //bf::path relative_path_base = daemonizer::get_relative_path_base(vm);
     bf::path relative_path_base = data_dir;
-
     po::notify(vm);
 
     // log_file_path

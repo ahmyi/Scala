@@ -66,7 +66,7 @@ namespace daemonizer
 
   inline boost::filesystem::path get_default_data_dir()
   {
-    return boost::filesystem::absolute(tools::get_default_data_dir());
+    return boost::filesystem::absolute(tools::get_default_data_dir(false));
   }
 
   inline boost::filesystem::path get_relative_path_base(

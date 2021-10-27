@@ -69,7 +69,7 @@ namespace {
 
     std::string get_default_ringdb_path(cryptonote::network_type nettype)
     {
-      boost::filesystem::path dir = tools::get_default_data_dir();
+      boost::filesystem::path dir = tools::get_default_data_dir(false);
       // remove .bitscala, replace with .shared-ringdb
       dir = dir.remove_filename();
       dir /= ".shared-ringdb";
@@ -2373,7 +2373,7 @@ std::string WalletImpl::make_uri(const std::string &address, const std::string &
 
 std::string WalletImpl::getDefaultDataDir() const
 {
- return tools::get_default_data_dir();
+ return tools::get_default_data_dir(false);
 }
 
 bool WalletImpl::rescanSpent()

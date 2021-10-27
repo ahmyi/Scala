@@ -68,24 +68,13 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-
-// IPFSStartNode starts the IPFS node and initializes ZeroNet
-
-extern char* IPFSStartNode(char* p0);
-
+extern char* IPFSStartNode(char* dataPath, GoInt P2PPort);
 extern char* IPFSStopNode();
-
-extern char* ResolveIPNS(char* p0);
-
-extern char* AddDirectory(char* p0);
-
-extern char* BootstrapAdd(char* p0);
-
+extern char* ResolveIPNSName(char* name);
+extern char* PublishIPFSName(char* ipfsHash);
 extern char* GetPeerID();
-
-extern char* PublishToIPNS(char* p0);
-
-extern char* Cat(char* p0);
+extern char* IpfsAdd(char* addPath);
+extern char* IpfsGet(char* ipfsHash, char* downloadPath);
 
 #ifdef __cplusplus
 }
