@@ -598,7 +598,7 @@ std::string get_nix_version_display_string()
   }
 #endif
   
-  std::string get_default_data_dir()
+  std::string get_default_data_dir(bool ipfs)
   {
     /* Please for the love of god refactor  the ifdefs out of this */
 
@@ -607,19 +607,25 @@ std::string get_nix_version_display_string()
     // Windows >= Vista: C:\Users\Username\AppData\Roaming\CRYPTONOTE_NAME
     // Unix & Mac: ~/.CRYPTONOTE_NAME
     std::string config_folder;
+    std::string libipfs_folder = ".libipfs-repo";
 
 #ifdef WIN32
     config_folder = get_special_folder_path(CSIDL_COMMON_APPDATA, true) + "\\" + CRYPTONOTE_NAME;
+    if(ipfs == true)
+      config_folder += "\\" + libipfs_folder
 #else
     std::string pathRet;
     char* pszHome = getenv("HOME");
+    
     if (pszHome == NULL || strlen(pszHome) == 0)
       pathRet = "/";
     else
       pathRet = pszHome;
-    config_folder = (pathRet + "/." + CRYPTONOTE_NAME);
+    config_folder = (pathRet + "/." + CRYPTONOTE_NAME);    
+    
+    if (ipfs == true)
+      config_folder += "/" + libipfs_folder; 
 #endif
-
     return config_folder;
   }
 

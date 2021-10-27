@@ -102,7 +102,7 @@ namespace cryptonote
   const command_line::arg_descriptor<std::string, false, true, 2> arg_data_dir = {
     "data-dir"
   , "Specify data directory"
-  , tools::get_default_data_dir()
+  , tools::get_default_data_dir(false)
   , {{ &arg_testnet_on, &arg_stagenet_on }}
   , [](std::array<bool, 2> testnet_stagenet, bool defaulted, std::string val)->std::string {
       if (testnet_stagenet[0])
@@ -120,6 +120,19 @@ namespace cryptonote
     "disable-ipfs"
   , "Stop IPFS from starting or running"
   };
+  const command_line::arg_descriptor<std::string, false, true, 2> arg_ipfs_data_dir = {
+    "ipfs-data-dir"
+  , "Specify IPFS data directory"
+  , tools::get_default_data_dir(true)
+  , {{ &arg_testnet_on, &arg_stagenet_on }}
+  , [](std::array<bool, 2> testnet_stagenet, bool defaulted, std::string val)->std::string {
+      if (testnet_stagenet[0])
+        return (boost::filesystem::path(val) / "testnet").string();
+      else if (testnet_stagenet[1])
+        return (boost::filesystem::path(val) / "stagenet").string();
+      return val;
+    }
+  };
   const command_line::arg_descriptor<bool> arg_disable_dns_checkpoints = {
     "disable-dns-checkpoints"
   , "Do not retrieve checkpoints from DNS"
@@ -128,6 +141,11 @@ namespace cryptonote
     "block-download-max-size"
   , "Set maximum size of block download queue in bytes (0 for default)"
   , 0
+  };
+  const command_line::arg_descriptor<uint64_t> arg_ipfs_port  = {
+    "ipfs-p2p-port"
+  , "Set a non-default port for IPFS P2P communications (11816 is default)"
+  , 11816
   };
   const command_line::arg_descriptor<bool> arg_sync_pruned_blocks  = {
     "sync-pruned-blocks"
@@ -358,6 +376,8 @@ namespace cryptonote
     command_line::add_arg(desc, arg_test_dbg_lock_sleep);
     command_line::add_arg(desc, arg_offline);
     command_line::add_arg(desc, arg_disable_ipfs);
+    command_line::add_arg(desc, arg_ipfs_data_dir);
+    command_line::add_arg(desc, arg_ipfs_port);
     command_line::add_arg(desc, arg_disable_dns_checkpoints);
     command_line::add_arg(desc, arg_block_download_max_size);
     command_line::add_arg(desc, arg_sync_pruned_blocks);
@@ -385,7 +405,8 @@ namespace cryptonote
 
     auto data_dir = boost::filesystem::path(m_config_folder);
 
-    m_disable_ipfs = get_arg(vm, arg_disable_ipfs);
+    m_disable_ipfs = command_line::get_arg(vm, arg_disable_ipfs);
+    m_ipfs_data_dir = command_line::get_arg(vm, arg_ipfs_data_dir);
 
     if (m_nettype == MAINNET)
     {
