@@ -40,11 +40,11 @@
 #include "common/command_line.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    #include "libipfs/include/libipfs-windows.h"
+    #include "libipfs/bin/libipfs-windows.h"
 #elif __APPLE__
-    #include "libipfs/include/libipfs-macos.h"
+    #include "libipfs/bin/libipfs-macos.h"
 #else
-    #include "libipfs/include/libipfs-linux.h"
+    #include "libipfs/bin/libipfs-linux.h"
 #endif
 
 #undef SCALA_DEFAULT_LOG_CATEGORY

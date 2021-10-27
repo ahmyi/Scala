@@ -275,6 +275,7 @@ if(NOT MANUAL_SUBMODULES)
     check_submodule(external/unbound)
     check_submodule(external/rapidjson)
     check_submodule(external/trezor-common)
+    check_submodule(external/libipfs)
     check_submodule(external/randomx)
     check_submodule(external/supercop)
   endif()
@@ -378,25 +379,44 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/supercop/include external/include/libipfs/include)
-
-# Find the libipfs library for each platform
 if(UNIX AND NOT APPLE)
-    if(NOT DEPENDS)
-      find_library(LIBIPFS NAMES ipfs-linux PATHS "${CMAKE_SOURCE_DIR}/external/libipfs" REQUIRED)
-    else()
-      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-linux.a")
-    endif()
+        execute_process(COMMAND env CGO_ENABLED=1 env GOOS=linux env GOARCH=amd64 go build -buildmode=c-archive -o ./bin/libipfs-linux.a ./src/libipfs.go
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs
+                        RESULT_VARIABLE GO_LIBIPFS_BUILD_LINUX)
+
+        set(LIBIPFS "${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs/bin/libipfs-linux.a")
+        
+        if(NOT GO_LIBIPFS_BUILD_LINUX EQUAL "0")
+            message(FATAL_ERROR "Building libipfs for Linux platform failed")
+        endif()
 elseif(MACOS OR APPLE)
-    list(APPEND EXTRA_LIBRARIES "-framework CoreFoundation -framework Security")
-    if(NOT DEPENDS)
-      find_library(LIBIPFS NAMES ipfs-macos PATHS "${CMAKE_SOURCE_DIR}/external/libipfs" REQUIRED)
-    else()
-      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-macos.a")
-    endif()
+        execute_process(COMMAND env CGO_ENABLED=1 env GOOS=darwin env GOARCH=amd64 go build -buildmode=c-archive -o ./bin/libipfs-macos.a ./src/libipfs.go
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs
+        RESULT_VARIABLE GO_LIBIPFS_BUILD_MACOS)
+
+        list(APPEND EXTRA_LIBRARIES "-framework CoreFoundation -framework Security")
+        if(NOT DEPENDS)
+          find_library(LIBIPFS NAMES ipfs-macos PATHS "${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs/bin" REQUIRED)
+        else()
+          set(LIBIPFS "${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs/bin/libipfs-macos.a")
+        endif()
+
+        if(NOT GO_LIBIPFS_BUILD_MACOS EQUAL "0")
+        message(FATAL_ERROR "Building libipfs for macOS platform failed")
+        endif()
 else()
-    set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-windows.a")
+        execute_process(COMMAND env CGO_ENABLED=1 env GOOS=windows env GOARCH=amd64 env CC=x86_64-w64-mingw32-gcc go build -buildmode=c-archive -o ./bin/libipfs-windows.a ./src/libipfs.go
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs
+        RESULT_VARIABLE GO_LIBIPFS_BUILD_WIN)
+
+        set(LIBIPFS "${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs/bin/libipfs-windows.a")
+
+        if(NOT GO_LIBIPFS_BUILD_WIN EQUAL "0")
+        message(FATAL_ERROR "Building libipfs for Windows platform failed")
+        endif()
 endif()
+
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/supercop/include external/libipfs/bin)
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)

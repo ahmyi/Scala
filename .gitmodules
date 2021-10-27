@@ -17,3 +17,6 @@
 [submodule "external/supercop"]
 	path = external/supercop
 	url = https://github.com/scala-network/supercop
+[submodule "external/libipfs"]
+	path = external/libipfs
+	url = https://github.com/scala-network/libipfs
