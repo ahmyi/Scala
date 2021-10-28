@@ -379,11 +379,11 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-execute_process(COMMAND go mod download 
+execute_process(COMMAND go mod download
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs
                 RESULT_VARIABLE GO_MOD_DOWNLOAD)
 
-if(NOT GO_MOD_DOWNLOAD EQUAL "0")
+if(GO_MOD_DOWNLOAD EQUAL "0")
         if(UNIX AND NOT APPLE)
                 execute_process(COMMAND env CGO_ENABLED=1 env GOOS=linux env GOARCH=amd64 go build -buildmode=c-archive -o ./bin/libipfs-linux.a ./src/libipfs.go
                                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/libipfs
