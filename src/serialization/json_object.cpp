@@ -34,6 +34,7 @@
 #include <type_traits>
 
 #include "cryptonote_basic/cryptonote_basic_impl.h"
+#include "cryptonote_core/cryptonote_tx_utils.h"
 
 // drop macro from windows.h
 #ifdef GetObject
@@ -1091,9 +1092,12 @@ void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const rct::rctSig& 
   };
 
   INSERT_INTO_JSON_OBJECT(dest, type, sig.type);
-  INSERT_INTO_JSON_OBJECT(dest, encrypted, sig.ecdhInfo);
-  INSERT_INTO_JSON_OBJECT(dest, commitments, transform(sig.outPk, just_mask));
-  INSERT_INTO_JSON_OBJECT(dest, fee, sig.txnFee);
+  if (sig.type != rct::RCTTypeNull)
+  {
+    INSERT_INTO_JSON_OBJECT(dest, encrypted, sig.ecdhInfo);
+    INSERT_INTO_JSON_OBJECT(dest, commitments, transform(sig.outPk, just_mask));
+    INSERT_INTO_JSON_OBJECT(dest, fee, sig.txnFee);
+  }
 
   // prunable
   if (!sig.p.bulletproofs.empty() || !sig.p.rangeSigs.empty() || !sig.p.MGs.empty() || !sig.get_pseudo_outs().empty())
@@ -1122,9 +1126,12 @@ void fromJsonValue(const rapidjson::Value& val, rct::rctSig& sig)
   }
 
   GET_FROM_JSON_OBJECT(val, sig.type, type);
-  GET_FROM_JSON_OBJECT(val, sig.ecdhInfo, encrypted);
-  GET_FROM_JSON_OBJECT(val, sig.outPk, commitments);
-  GET_FROM_JSON_OBJECT(val, sig.txnFee, fee);
+  if (sig.type != rct::RCTTypeNull)
+  {
+    GET_FROM_JSON_OBJECT(val, sig.ecdhInfo, encrypted);
+    GET_FROM_JSON_OBJECT(val, sig.outPk, commitments);
+    GET_FROM_JSON_OBJECT(val, sig.txnFee, fee);
+  }
 
   // prunable
   const auto prunable = val.FindMember("prunable");
@@ -1403,6 +1410,27 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::output_distribu
   GET_FROM_JSON_OBJECT(val, dist.amount, amount);
   GET_FROM_JSON_OBJECT(val, dist.data.start_height, start_height);
   GET_FROM_JSON_OBJECT(val, dist.data.base, base);
+}
+
+void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const cryptonote::tx_block_template_backlog_entry& entry)
+{
+  dest.StartObject();
+  INSERT_INTO_JSON_OBJECT(dest, id, entry.id);
+  INSERT_INTO_JSON_OBJECT(dest, weight, entry.weight);
+  INSERT_INTO_JSON_OBJECT(dest, fee, entry.fee);
+  dest.EndObject();
+}
+
+void fromJsonValue(const rapidjson::Value& val, cryptonote::tx_block_template_backlog_entry& entry)
+{
+  if (!val.IsObject())
+  {
+    throw WRONG_TYPE("json object");
+  }
+
+  GET_FROM_JSON_OBJECT(val, entry.id, id);
+  GET_FROM_JSON_OBJECT(val, entry.weight, weight);
+  GET_FROM_JSON_OBJECT(val, entry.fee, fee);
 }
 
 }  // namespace json
