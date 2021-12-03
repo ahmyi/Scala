@@ -143,7 +143,7 @@ jobs:
       run: ${{env.APT_SET_CONF}}
     - name: update apt
       run: sudo apt update
-    - name: install monero dependencies
+    - name: install scala dependencies
       run: ${{env.APT_INSTALL_LINUX}}
     - name: install Python dependencies
       run: pip install requests psutil monotonic
