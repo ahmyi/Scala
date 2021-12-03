@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -36,7 +37,7 @@ if(APPLE)
   endif()
 endif()
 
-monero_add_library(cryptonote_format_utils_basic
+scala_add_library(cryptonote_format_utils_basic
   cryptonote_format_utils_basic.cpp
 )
 target_link_libraries(cryptonote_format_utils_basic
@@ -71,9 +72,9 @@ set(cryptonote_basic_private_headers
   tx_extra.h
   verification_context.h)
 
-monero_private_headers(cryptonote_basic
+scala_private_headers(cryptonote_basic
   ${cryptonote_basic_private_headers})
-monero_add_library(cryptonote_basic
+scala_add_library(cryptonote_basic
   ${cryptonote_basic_sources}
   ${cryptonote_basic_headers}
   ${cryptonote_basic_private_headers})

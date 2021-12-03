@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 
@@ -416,7 +417,8 @@ TEST(cryptonote_protocol_handler, race_condition)
       {},
       db.get_block_already_generated_coins(height - 1),
       reward,
-      hardfork
+      hardfork,
+      height
     );
     block.miner_tx.vout.push_back(cryptonote::tx_out{reward, cryptonote::txout_to_key{}});
     diff = storage.get_difficulty_for_next_block();

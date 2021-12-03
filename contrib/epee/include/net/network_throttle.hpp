@@ -1,8 +1,9 @@
 /// @file
-/// @author rfree (current maintainer in monero.cc project)
+/// @author rfree (current maintainer in scala.cc project)
 /// @brief interface for throttling of connection (count and rate-limit speed etc)
 
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 

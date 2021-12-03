@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 
@@ -1122,6 +1123,7 @@ namespace cryptonote
       std::string wide_cumulative_difficulty;
       uint64_t cumulative_difficulty_top64;
       uint64_t reward;
+      uint64_t miner_reward;
       uint64_t block_size;
       uint64_t block_weight;
       uint64_t num_txes;
@@ -1146,6 +1148,7 @@ namespace cryptonote
         KV_SERIALIZE(wide_cumulative_difficulty)
         KV_SERIALIZE(cumulative_difficulty_top64)
         KV_SERIALIZE(reward)
+        KV_SERIALIZE(miner_reward)
         KV_SERIALIZE(block_size)
         KV_SERIALIZE_OPT(block_weight, (uint64_t)0)
         KV_SERIALIZE(num_txes)

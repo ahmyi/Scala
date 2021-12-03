@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -34,13 +35,13 @@ if (WIN32 OR STATIC)
   add_definitions(-DMINIUPNP_STATICLIB)
 endif ()
 
-function (monero_private_headers group)
+function (scala_private_headers group)
   source_group("${group}\\Private"
     FILES
       ${ARGN})
 endfunction ()
 
-function (monero_install_headers subdir)
+function (scala_install_headers subdir)
   install(
     FILES       ${ARGN}
     DESTINATION "include/${subdir}"
@@ -58,7 +59,7 @@ function (enable_stack_trace target)
   endif()
 endfunction()
 
-function (monero_add_executable name)
+function (scala_add_executable name)
   source_group("${name}"
     FILES
       ${ARGN})
@@ -76,16 +77,41 @@ function (monero_add_executable name)
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
   enable_stack_trace("${name}")
   
-  monero_set_target_no_relink("${name}")
-  monero_set_target_strip    ("${name}")
+  scala_set_target_no_relink("${name}")
+  scala_set_target_strip    ("${name}")
+endfunction ()
+
+function (scala_add_library name)
+    scala_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
+endfunction()
+
+function (scala_add_library_with_deps)
+  cmake_parse_arguments(SCALA_ADD_LIBRARY "" "NAME" "DEPENDS;SOURCES" ${ARGN})
+  source_group("${SCALA_ADD_LIBRARY_NAME}" FILES ${SCALA_ADD_LIBRARY_SOURCES})
+
+  # Define a ("virtual") object library and an actual library that links those
+  # objects together. The virtual libraries can be arbitrarily combined to link
+  # any subset of objects into one library archive. This is used for releasing
+  # libwallet, which combines multiple components.
+  set(objlib obj_${SCALA_ADD_LIBRARY_NAME})
+  add_library(${objlib} OBJECT ${SCALA_ADD_LIBRARY_SOURCES})
+  add_library("${SCALA_ADD_LIBRARY_NAME}" $<TARGET_OBJECTS:${objlib}>)
+  scala_set_target_no_relink("${SCALA_ADD_LIBRARY_NAME}")
+  if (SCALA_ADD_LIBRARY_DEPENDS)
+    add_dependencies(${objlib} ${SCALA_ADD_LIBRARY_DEPENDS})
+  endif()
+  set_property(TARGET "${SCALA_ADD_LIBRARY_NAME}" PROPERTY FOLDER "libs")
+  target_compile_definitions(${objlib}
+    PRIVATE $<TARGET_PROPERTY:${SCALA_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 endfunction ()
 
 include(Version)
-monero_add_library(version SOURCES ${CMAKE_BINARY_DIR}/version.cpp DEPENDS genversion)
+scala_add_library(version SOURCES ${CMAKE_BINARY_DIR}/version.cpp DEPENDS genversion)
 
 add_subdirectory(common)
 add_subdirectory(crypto)
 add_subdirectory(ringct)
+add_subdirectory(diardi)
 add_subdirectory(checkpoints)
 add_subdirectory(cryptonote_basic)
 add_subdirectory(cryptonote_core)

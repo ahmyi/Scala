@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 //
 // All rights reserved.
 //
@@ -616,9 +617,16 @@ namespace cryptonote
      */
     static uint64_t get_fee_quantization_mask()
     {
-      return tools::PowerOf<10, CRYPTONOTE_DISPLAY_DECIMAL_POINT - PER_KB_FEE_QUANTIZATION_DECIMALS>::Value;
+      static uint64_t mask = 0;
+      if (mask == 0)
+      {
+        mask = 1;
+        for (size_t n = PER_KB_FEE_QUANTIZATION_DECIMALS; n < CRYPTONOTE_DISPLAY_DECIMAL_POINT; ++n)
+          mask *= 10;
+      }
+      return mask;
     }
-
+    
     /**
      * @brief get dynamic per kB or byte fee for a given block weight
      *
@@ -1459,7 +1467,7 @@ namespace cryptonote
      * @brief checks a block's timestamp
      *
      * This function grabs the timestamps from the most recent <n> blocks,
-     * where n = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW.  If there are not those many
+     * where n = BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_NEW.  If there are not those many
      * blocks in the blockchain, the timestap is assumed to be valid.  If there
      * are, this function returns:
      *   true if the block's timestamp is not less than the timestamp of the
@@ -1492,7 +1500,7 @@ namespace cryptonote
      * @brief finish an alternate chain's timestamp window from the main chain
      *
      * for an alternate chain, get the timestamps from the main chain to complete
-     * the needed number of timestamps for the BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW.
+     * the needed number of timestamps for the BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_NEW.
      *
      * @param start_height the alternate chain's attachment height to the main chain
      * @param timestamps return-by-value the timestamps set to be populated
@@ -1537,7 +1545,7 @@ namespace cryptonote
      * @brief loads block hashes from compiled-in data set
      *
      * A (possibly empty) set of block hashes can be compiled into the
-     * monero daemon binary.  This function loads those hashes into
+     * scala daemon binary.  This function loads those hashes into
      * a useful state.
      * 
      * @param get_checkpoints if set, will be called to get checkpoints data

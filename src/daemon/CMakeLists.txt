@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -25,6 +26,17 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+if(APPLE)
+  list(APPEND EXTRA_LIBRARIES "-framework Foundation -framework ApplicationServices -framework AppKit -framework CoreFoundation -framework Security")
+  if(DEPENDS)
+    list(APPEND EXTRA_LIBRARIES "-framework IOKit")
+  else()
+    find_library(IOKIT_LIBRARY IOKit)
+    mark_as_advanced(IOKIT_LIBRARY)
+    list(APPEND EXTRA_LIBRARIES ${IOKIT_LIBRARY})
+  endif()
+endif()
 
 set(daemon_sources
   command_parser_executor.cpp
@@ -62,9 +74,9 @@ set(daemon_private_headers
   ../p2p/p2p_protocol_defs.h
   ../p2p/stdafx.h)
 
-monero_private_headers(daemon
+scala_private_headers(daemon
   ${daemon_private_headers})
-monero_add_executable(daemon
+scala_add_executable(daemon
   ${daemon_sources}
   ${daemon_headers}
   ${daemon_private_headers})
@@ -82,6 +94,7 @@ target_link_libraries(daemon
     daemon_rpc_server
     ${EPEE_READLINE}
     version
+    ${LIBIPFS}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
@@ -94,5 +107,5 @@ target_link_libraries(daemon
     ${Blocks})
 set_property(TARGET daemon
   PROPERTY
-    OUTPUT_NAME "monerod")
+    OUTPUT_NAME "scalad")
 install(TARGETS daemon DESTINATION bin)

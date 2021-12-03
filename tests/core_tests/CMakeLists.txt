@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -68,7 +69,7 @@ set(core_tests_headers
   rct2.h
   wallet_tools.h)
 
-monero_add_minimal_executable(core_tests
+scala_add_minimal_executable(core_tests
   ${core_tests_sources}
   ${core_tests_headers})
 target_link_libraries(core_tests
