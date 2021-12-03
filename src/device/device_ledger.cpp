@@ -43,8 +43,8 @@ namespace hw {
 
   #ifdef WITH_DEVICE_LEDGER
 
-    #undef MONERO_DEFAULT_LOG_CATEGORY
-    #define MONERO_DEFAULT_LOG_CATEGORY "device.ledger"
+    #undef SCALA_DEFAULT_LOG_CATEGORY
+    #define SCALA_DEFAULT_LOG_CATEGORY "device.ledger"
 
     /* ===================================================================== */
     /* ===                           Debug                              ==== */
@@ -55,10 +55,10 @@ namespace hw {
     }
 
     #define TRACKD MTRACE("hw")
-    #define ASSERT_SW(sw,ok,msk) CHECK_AND_ASSERT_THROW_MES(((sw)&(msk))==(ok), \
+    #define ASSERT_SW(sw,ok,msk) CHECK_AND_ASSERT_THROW_MES(((sw)&(mask))==(ok), \
       "Wrong Device Status: " << "0x" << std::hex << (sw) << " (" << Status::to_string(sw) << "), " << \
       "EXPECTED 0x" << std::hex << (ok) << " (" << Status::to_string(ok) << "), " << \
-      "MASK 0x" << std::hex << (msk));
+      "MASK 0x" << std::hex << (mask));
     #define ASSERT_T0(exp)       CHECK_AND_ASSERT_THROW_MES(exp, "Protocol assert failure: "#exp ) ;
     #define ASSERT_X(exp,msg)    CHECK_AND_ASSERT_THROW_MES(exp, msg); 
 
@@ -441,10 +441,10 @@ namespace hw {
     bool device_ledger::reset() {
       reset_buffer();
       int offset = set_command_header_noopt(INS_RESET);
-      const size_t verlen = strlen(MONERO_VERSION);
-      ASSERT_X(offset + verlen <= BUFFER_SEND_SIZE, "MONERO_VERSION is too long")
-      memmove(this->buffer_send+offset, MONERO_VERSION, verlen);
-      offset += strlen(MONERO_VERSION);
+      const size_t verlen = strlen(SCALA_VERSION);
+      ASSERT_X(offset + verlen <= BUFFER_SEND_SIZE, "SCALA_VERSION is too long")
+      memmove(this->buffer_send+offset, SCALA_VERSION, verlen);
+      offset += strlen(SCALA_VERSION);
       this->buffer_send[4] = offset-5;
       this->length_send = offset;
       this->exchange();
@@ -466,7 +466,7 @@ namespace hw {
       MDEBUG("Device "<< this->id << " exchange: sw: " << this->sw << " expected: " << ok);
       ASSERT_X(sw != SW_CLIENT_NOT_SUPPORTED, "Monero Ledger App doesn't support current monero version. Try to update the Monero Ledger App, at least " << MINIMAL_APP_VERSION_MAJOR<< "." << MINIMAL_APP_VERSION_MINOR << "." << MINIMAL_APP_VERSION_MICRO << " is required.");
       ASSERT_X(sw != SW_PROTOCOL_NOT_SUPPORTED, "Make sure no other program is communicating with the Ledger.");
-      ASSERT_SW(this->sw,ok,mask);
+      ASSERT_SW(this->sw,ok,msk);
 
       return this->sw;
     }
@@ -483,7 +483,7 @@ namespace hw {
         // cancel on device
         deny = 1;
       } else {
-        ASSERT_SW(this->sw,ok,mask);
+        ASSERT_SW(this->sw,ok,msk);
       }
 
       logRESP();

@@ -31,6 +31,11 @@
 #include <boost/utility/string_ref_fwd.hpp>
 #include <string>
 
+#include "misc_log_ex.h"
+
+#undef SCALA_DEFAULT_LOG_CATEGORY
+#define SCALA_DEFAULT_LOG_CATEGORY "serialization"
+
 namespace epee 
 {
 namespace misc_utils

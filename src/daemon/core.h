@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 
@@ -28,14 +29,28 @@
 
 #pragma once
 
+#include <chrono>
+#include <thread>
 #include "blocks/blocks.h"
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "misc_log_ex.h"
 #include "daemon/command_line_args.h"
+#include "rapidjson/document.h"
+#include "common/command_line.h"
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "daemon"
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    #include "libipfs/include/libipfs-windows.h"
+#elif  defined(__APPLE__)
+    #include "libipfs/include/libipfs-macos.h"
+#else
+    #include "libipfs/include/libipfs-linux.h"
+#endif
+
+#undef SCALA_DEFAULT_LOG_CATEGORY
+#define SCALA_DEFAULT_LOG_CATEGORY "daemon"
+
+using namespace rapidjson;
 
 namespace daemonize
 {
@@ -61,23 +76,43 @@ public:
     , m_vm_HACK{vm}
   {
     //initialize core here
-    MGINFO("Initializing core...");
-#if defined(PER_BLOCK_CHECKPOINT)
-    const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
-#else
-    const cryptonote::GetCheckpointsCallback& get_checkpoints = nullptr;
-#endif
+ if(!(command_line::has_arg(vm, cryptonote::arg_disable_ipfs))){
+      MGINFO("Initializing IPFS...");
+      const char* IPFSstartMessage = IPFSStartNode((char*)"./");
+      Document startMessage;
+      startMessage.Parse(IPFSstartMessage);
+      std::string parsedMessage = startMessage["Message"].GetString();
+      std::chrono::seconds ipfsWaitDuration(20);
 
-    if (command_line::is_arg_defaulted(vm, daemon_args::arg_proxy) && command_line::get_arg(vm, daemon_args::arg_proxy_allow_dns_leaks)) {
-      MLOG_RED(el::Level::Warning, "--" << daemon_args::arg_proxy_allow_dns_leaks.name << " is enabled, but --"
-        << daemon_args::arg_proxy.name << " is not specified.");
+      if ((parsedMessage.find("started on port") != std::string::npos)) {
+        MGINFO("Initialized new IPFS daemon...");
+        std::this_thread::sleep_for( ipfsWaitDuration );
+      }
+
+      else if(parsedMessage.find("busy") != std::string::npos){
+        MGINFO("Reusing existing running IPFS daemon...");
+        std::this_thread::sleep_for( ipfsWaitDuration );
+      }
+
+      else{
+        MGINFO("Could not initialize IPFS...");
+        m_core.graceful_exit();
+      }
+    }else{
+      MGINFO("Not starting IPFS daemon...");
     }
 
-    const bool allow_dns = command_line::is_arg_defaulted(vm, daemon_args::arg_proxy) || command_line::get_arg(vm, daemon_args::arg_proxy_allow_dns_leaks);
-    if (!m_core.init(m_vm_HACK, nullptr, get_checkpoints, allow_dns))
+    Document startMessage;
+    #if defined(PER_BLOCK_CHECKPOINT)
+        const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
+    #else
+        const cryptonote::GetCheckpointsCallback& get_checkpoints = nullptr;
+    #endif
+    if (!m_core.init(m_vm_HACK, nullptr, get_checkpoints))
     {
       throw std::runtime_error("Failed to initialize core");
     }
+
     MGINFO("Core initialized OK");
   }
 
@@ -103,6 +138,18 @@ public:
     try {
       m_core.deinit();
       m_core.set_cryptonote_protocol(nullptr);
+
+      if(!(command_line::has_arg(m_vm_HACK, cryptonote::arg_disable_ipfs))){
+        MGINFO("Deinitializing IPFS...");
+        const char* IPFSstopMessage = IPFSStopNode();
+        Document stopMessage;
+        stopMessage.Parse(IPFSstopMessage);
+        std::string parsedMessage = stopMessage["Message"].GetString();
+        if (parsedMessage.find("IPFS node stopped") != std::string::npos) {
+          MGINFO("IPFS daemon stopped...");
+        }
+      }
+
     } catch (...) {
       MERROR("Failed to deinitialize core...");
     }

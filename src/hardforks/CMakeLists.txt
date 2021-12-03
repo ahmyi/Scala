@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -34,9 +35,9 @@ set(hardforks_headers
 
 set(hardforks_private_headers)
 
-monero_private_headers(hardforks
+scala_private_headers(hardforks
   ${hardforks_private_headers})
-monero_add_library(hardforks
+scala_add_library(hardforks
   ${hardforks_sources}
   ${hardforks_headers}
   ${hardforks_private_headers})

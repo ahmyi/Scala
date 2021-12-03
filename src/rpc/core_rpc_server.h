@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 
@@ -44,8 +45,8 @@
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "rpc_payment.h"
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
+#undef SCALA_DEFAULT_LOG_CATEGORY
+#define SCALA_DEFAULT_LOG_CATEGORY "daemon.rpc"
 
 // yes, epee doesn't properly use its full namespace when calling its
 // functions from macros.  *sigh*

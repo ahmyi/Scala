@@ -1,4 +1,5 @@
 # Copyright (c) 2014-2020, The Monero Project
+# Copyright (c) 2018-2021, The Scala Network Project
 #
 # All rights reserved.
 #
@@ -55,7 +56,7 @@ set(performance_tests_headers
   performance_utils.h
   single_tx_test_base.h)
 
-monero_add_minimal_executable(performance_tests
+scala_add_minimal_executable(performance_tests
   ${performance_tests_sources}
   ${performance_tests_headers})
 target_link_libraries(performance_tests

@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 // 
 // All rights reserved.
 // 
@@ -330,7 +331,7 @@ bool test_generator::construct_block(cryptonote::block& blk, const cryptonote::b
   uint64_t height = boost::get<txin_gen>(blk_prev.miner_tx.vin.front()).height + 1;
   crypto::hash prev_id = get_block_hash(blk_prev);
   // Keep difficulty unchanged
-  uint64_t timestamp = blk_prev.timestamp + current_difficulty_window(hf_ver); // DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN;
+  uint64_t timestamp = blk_prev.timestamp + current_DIFFICULTY_WINDOW_NEW(hf_ver); // DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN;
   uint64_t already_generated_coins = get_already_generated_coins(prev_id);
   std::vector<size_t> block_weights;
   get_last_n_block_weights(block_weights, prev_id, CRYPTONOTE_REWARD_BLOCKS_WINDOW);
@@ -745,7 +746,7 @@ std::string block_tracker::dump_data()
 
       ss << "    idx: " << oi.idx
       << ", rct: " << oi.rct
-      << ", xmr: " << oi.amount
+      << ", xla: " << oi.amount
       << ", key: " << dump_keys(out.key.data)
       << ", msk: " << dump_keys(oi.comm.bytes)
       << ", txid: " << dump_keys(oi.p_tx->hash.data)
@@ -987,7 +988,7 @@ bool construct_miner_tx_manually(size_t height, uint64_t already_generated_coins
 
   // This will work, until size of constructed block is less then CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE
   uint64_t block_reward;
-  if (!get_block_reward(0, 0, already_generated_coins, block_reward, 1))
+  if (!get_block_reward(0, 0, already_generated_coins, block_reward, 1, 1))
   {
     LOG_PRINT_L0("Block is too big");
     return false;

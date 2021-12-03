@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 //
 // All rights reserved.
 //
@@ -50,8 +51,8 @@
 #include "common/stack_trace.h"
 #endif // STACK_TRACE
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "daemon"
+#undef SCALA_DEFAULT_LOG_CATEGORY
+#define SCALA_DEFAULT_LOG_CATEGORY "daemon"
 
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
@@ -190,16 +191,16 @@ int main(int argc, char const * argv[])
 
     if (command_line::get_arg(vm, command_line::arg_help))
     {
-      std::cout << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+      std::cout << "Scala '" << SCALA_RELEASE_NAME << "' (v" << SCALA_VERSION_FULL << ")" << ENDL << ENDL;
       std::cout << "Usage: " + std::string{argv[0]} + " [options|settings] [daemon_command...]" << std::endl << std::endl;
       std::cout << visible_options << std::endl;
       return 0;
     }
 
-    // Monero Version
+    // Scala Version
     if (command_line::get_arg(vm, command_line::arg_version))
     {
-      std::cout << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
+      std::cout << "Scala '" << SCALA_RELEASE_NAME << "' (v" << SCALA_VERSION_FULL << ")" << ENDL;
       return 0;
     }
 
@@ -242,7 +243,7 @@ int main(int argc, char const * argv[])
     }
 
     // data_dir
-    //   default: e.g. ~/.bitmonero/ or ~/.bitmonero/testnet
+    //   default: e.g. ~/.bitscala/ or ~/.bitscala/testnet
     //   if data-dir argument given:
     //     absolute path
     //     relative path: relative to cwd
@@ -293,7 +294,34 @@ int main(int argc, char const * argv[])
       tools::set_max_concurrency(command_line::get_arg(vm, daemon_args::arg_max_concurrency));
 
     // logging is now set up
-    MGINFO("Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
+    MGINFO("Scala '" << SCALA_RELEASE_NAME << "' (v" << SCALA_VERSION_FULL << ")");
+    const char *asciiArt = R""""(
+
+ ,\/~~~\_                            _/~~~~\
+ |  ---, `\_    ___,-------~~\__  /~' ,,''  |
+ | `~`, ',,\`-~~--_____    ---  - /, ,--/ '/'
+  `\_|\ _\`    ______,---~~~\  ,_   '\_/' /'
+    \,_|   , '~,/'~   /~\ ,_  `\_\ \_  \_\'
+    ,/   /' ,/' _,-'~~  `\  ~~\_ ,_  `\  `\
+  /@@ _/  /' ./',-                 \       `@,
+  @@ '   |  ___/  /'  /  \  \ '\__ _`~|, `, @@
+/@@ /  | | ',___  |  |    `  | ,,---,  |  | `@@,
+@@@ \  | | \ \O_`\ |        / / O_/' | \  \  @@@
+@@@ |  | `| '   ~ / ,          ~     /  |    @@@
+`@@ |   \ `\     ` |         | |  _/'  /'  | @@'
+ @@ |    ~\ /--'~  |       , |  \__   |    | |@@
+ @@, \     | ,,|   |       ,,|   | `\     /',@@
+ `@@, ~\   \ '     |       / /    `' '   / ,@@
+  @@@,    \    ~~\ `\/~---'~/' _ /'~~~~~~~~--,_
+   `@@@_,---::::::=  `-,| ,~  _=:::::''''''    `
+   ,/~~_---'_,-___     _-__  ' -~~~\_```---
+     ~`   ~~_/'// _,--~\_/ '~--, |\_
+          /' /'| `@@@@@,,,,,@@@@  | \
+               `     `@@@@@@'
+  Artwork by Chev
+)"""";
+
+    MGINFO(asciiArt);
 
     // If there are positional options, we're running a daemon command
     {

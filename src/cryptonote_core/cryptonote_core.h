@@ -1,4 +1,5 @@
 // Copyright (c) 2014-2020, The Monero Project
+// Copyright (c) 2018-2021, The Scala Network Project
 //
 // All rights reserved.
 //
@@ -51,6 +52,7 @@
 #include "crypto/hash.h"
 #include "span.h"
 #include "rpc/fwd.h"
+#include "checkpoints/checkpoints.h"
 
 PUSH_WARNINGS
 DISABLE_VS_WARNINGS(4355)
@@ -70,6 +72,7 @@ namespace cryptonote
   extern const command_line::arg_descriptor<bool, false> arg_regtest_on;
   extern const command_line::arg_descriptor<difficulty_type> arg_fixed_difficulty;
   extern const command_line::arg_descriptor<bool> arg_offline;
+  extern const command_line::arg_descriptor<bool> arg_disable_ipfs;
   extern const command_line::arg_descriptor<size_t> arg_block_download_max_size;
   extern const command_line::arg_descriptor<bool> arg_sync_pruned_blocks;
 
@@ -1076,7 +1079,7 @@ namespace cryptonote
 
      //m_miner and m_miner_addres are probably temporary here
      miner m_miner; //!< miner instance
-
+     
      std::string m_config_folder; //!< folder to look in for configs and other files
 
      cryptonote_protocol_stub m_protocol_stub; //!< cryptonote protocol stub instance
@@ -1093,6 +1096,8 @@ namespace cryptonote
 
      uint64_t m_target_blockchain_height; //!< blockchain height target
 
+     checkpoints m_checkpointsO;
+
      network_type m_nettype; //!< which network are we on?
 
      std::atomic<bool> m_update_available;
@@ -1100,9 +1105,11 @@ namespace cryptonote
      std::string m_checkpoints_path; //!< path to json checkpoints file
      time_t m_last_dns_checkpoints_update; //!< time when dns checkpoints were last updated
      time_t m_last_json_checkpoints_update; //!< time when json checkpoints were last updated
+     time_t m_last_diardi_checkpoints_update; //!< time when json checkpoints were last updated
 
      std::atomic_flag m_checkpoints_updating; //!< set if checkpoints are currently updating to avoid multiple threads attempting to update at once
      bool m_disable_dns_checkpoints;
+     bool m_disable_ipfs;
 
      size_t block_sync_size;
 
