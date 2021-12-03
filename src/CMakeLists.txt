@@ -78,6 +78,7 @@ function (scala_add_executable name)
   enable_stack_trace("${name}")
   
   scala_set_target_no_relink("${name}")
+  scala_set_target_strip    ("${name}")
 endfunction ()
 
 function (scala_add_library name)

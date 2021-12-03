@@ -4485,8 +4485,8 @@ Entrée %llu/%llu (%s): montant=%s</translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="7388"/>
-        <source>Donating %s %s to The Monero Project (donate.getscala.org or %s).</source>
-        <translation>Don de %s %s à The Monero Project (donate.getscala.org ou %s).</translation>
+        <source>Donating %s %s to The Scala Project (donate.scalaproject.io or %s).</source>
+        <translation>Don de %s %s à The Scala Project (donate.scalaproject.io ou %s).</translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="7722"/>

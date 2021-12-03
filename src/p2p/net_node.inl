@@ -271,9 +271,17 @@ namespace nodetool
 
       peerlist_entry pe{};
       pe.adr = addr;
-      zone.second.m_peerlist.remove_from_peer_white(pe);
-      zone.second.m_peerlist.remove_from_peer_gray(pe);
-      zone.second.m_peerlist.remove_from_peer_anchor(addr);
+      if (addr.port() == 0)
+      {
+        zone.second.m_peerlist.evict_host_from_peerlist(true, pe);
+        zone.second.m_peerlist.evict_host_from_peerlist(false, pe);
+      }
+      else
+      {
+        zone.second.m_peerlist.remove_from_peer_white(pe);
+        zone.second.m_peerlist.remove_from_peer_gray(pe);
+        zone.second.m_peerlist.remove_from_peer_anchor(addr);
+     }
 
       for (const auto &c: conns)
         zone.second.m_net_server.get_config_object().close(c);
@@ -332,6 +340,13 @@ namespace nodetool
       });
       for (const auto &c: conns)
         zone.second.m_net_server.get_config_object().close(c);
+
+      for (int i = 0; i < 2; ++i)
+        zone.second.m_peerlist.filter(i == 0, [&subnet](const peerlist_entry &pe){
+          if (pe.adr.get_type_id() != epee::net_utils::ipv4_network_address::get_type_id())
+            return false;
+          return subnet.matches(pe.adr.as<const epee::net_utils::ipv4_network_address>());
+        });
 
       conns.clear();
     }
@@ -713,6 +728,12 @@ namespace nodetool
     {
       return get_ip_seed_nodes();
     }
+    if (!m_enable_dns_seed_nodes)
+    {
+      // TODO: a domain can be set through socks, so that the remote side does the lookup for the DNS seed nodes.
+      m_fallback_seed_nodes_added.test_and_set();
+      return get_ip_seed_nodes();
+    }
 
     std::set<std::string> full_addrs;
 
@@ -821,6 +842,7 @@ namespace nodetool
           "xwvz3ekocr3dkyxfkmgm2hvbpzx2ysqmaxgter7znnqrhoicygkfswid.onion:18083",
           "4pixvbejrvihnkxmduo2agsnmc3rrulrqc7s3cbwwrep6h6hrzsibeqd.onion:18083",
           "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18083",
+          "qz43zul2x56jexzoqgkx2trzwcfnr6l3hbtfcfx54g4r3eahy3bssjyd.onion:18083",
         };
       }
       return {};
@@ -851,10 +873,21 @@ namespace nodetool
   }
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
-  bool node_server<t_payload_net_handler>::init(const boost::program_options::variables_map& vm)
+  bool node_server<t_payload_net_handler>::init(const boost::program_options::variables_map& vm, const std::string& proxy, bool proxy_dns_leaks_allowed)
   {
     bool res = handle_command_line(vm);
     CHECK_AND_ASSERT_MES(res, false, "Failed to handle command line");
+    if (proxy.size())
+    {
+      const auto endpoint = net::get_tcp_endpoint(proxy);
+      CHECK_AND_ASSERT_MES(endpoint, false, "Failed to parse proxy: " << proxy << " - " << endpoint.error());
+      network_zone& public_zone = m_network_zones[epee::net_utils::zone::public_];
+      public_zone.m_connect = &socks_connect;
+      public_zone.m_proxy_address = *endpoint;
+      public_zone.m_can_pingback = false;
+      m_enable_dns_seed_nodes &= proxy_dns_leaks_allowed;
+      m_enable_dns_blocklist &= proxy_dns_leaks_allowed;
+    }
 
     if (m_nettype == cryptonote::TESTNET)
     {
@@ -1383,6 +1416,7 @@ namespace nodetool
     ape.first_seen = first_seen_stamp ? first_seen_stamp : time(nullptr);
 
     zone.m_peerlist.append_with_peer_anchor(ape);
+    zone.m_notifier.on_handshake_complete(con->m_connection_id, con->m_is_income);
     zone.m_notifier.new_out_connection();
 
     LOG_DEBUG_CC(*con, "CONNECTION HANDSHAKED OK.");
@@ -2491,6 +2525,8 @@ namespace nodetool
       return 1;
     }
 
+    zone.m_notifier.on_handshake_complete(context.m_connection_id, context.m_is_income);
+
     if(has_too_many_connections(context.m_remote_address))
     {
       LOG_PRINT_CCONTEXT_L1("CONNECTION FROM " << context.m_remote_address.host_str() << " REFUSED, too many connections from the same address");
@@ -2617,6 +2653,9 @@ namespace nodetool
       zone.m_peerlist.remove_from_peer_anchor(na);
     }
 
+    if (!zone.m_net_server.is_stop_signal_sent()) {
+      zone.m_notifier.on_connection_close(context.m_connection_id);
+    }
     m_payload_handler.on_connection_close(context);
 
     MINFO("["<< epee::net_utils::print_connection_context(context) << "] CLOSE CONNECTION");

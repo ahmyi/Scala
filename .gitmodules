@@ -5,6 +5,7 @@
 [submodule "external/miniupnp"]
 	path = external/miniupnp
 	url = https://github.com/miniupnp/miniupnp
+	branch = master
 [submodule "external/rapidjson"]
 	path = external/rapidjson
 	url = https://github.com/Tencent/rapidjson
@@ -17,3 +18,4 @@
 [submodule "external/supercop"]
 	path = external/supercop
 	url = https://github.com/scala-network/supercop
+	branch = scala

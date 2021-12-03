@@ -1030,8 +1030,8 @@
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="7388"/>
-        <source>Donating %s %s to The Monero Project (donate.getscala.org or %s).</source>
-        <translation>Donare %s %s a The Monero Project (donate.getscala.org o %s).</translation>
+        <source>Donating %s %s to The Scala Project (donate.scalaproject.io or %s).</source>
+        <translation>Donare %s %s a The Scala Project (donate.scalaproject.io o %s).</translation>
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="7390"/>

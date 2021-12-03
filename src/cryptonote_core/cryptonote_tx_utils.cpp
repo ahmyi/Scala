@@ -752,8 +752,10 @@ namespace cryptonote
       if (need_additional_txkeys)
       {
         additional_tx_keys.clear();
-        for (const auto &d: destinations)
+        for (size_t i = 0; i < destinations.size(); ++i)
+        {
           additional_tx_keys.push_back(keypair::generate(sender_account_keys.get_device()).sec);
+        }
       }
 
       bool r = construct_tx_with_tx_key(sender_account_keys, subaddresses, sources, destinations, change_addr, extra, tx, unlock_time, tx_key, additional_tx_keys, rct, rct_config, msout);
@@ -806,10 +808,11 @@ namespace cryptonote
     rx_slow_hash(main_height, seed_height, seed_hash.data, bd.data(), bd.size(), res.data, 0, 1);
   }
 
-  bool get_block_longhash(const Blockchain *pbc, const block& b, crypto::hash& res, const uint64_t height, const crypto::hash *seed_hash, const int miners)
+  bool get_block_longhash(const Blockchain *pbc, const blobdata& bd, crypto::hash& res, const uint64_t height, const int major_version, const crypto::hash *seed_hash, const int miners)
   {
-    blobdata bd = get_block_hashing_blob(b);
-    if (b.major_version >= RX_BLOCK_VERSION)
+    // blobdata bd = get_block_hashing_blob(b);
+    //block b = bd.block;
+    if (major_version >= RX_BLOCK_VERSION)
     {
       uint64_t seed_height, main_height;
       crypto::hash hash;
@@ -826,10 +829,17 @@ namespace cryptonote
       }
       rx_slow_hash(main_height, seed_height, hash.data, bd.data(), bd.size(), res.data, seed_hash ? 0 : miners, !!seed_hash);
     } else {
-      const int pow_variant = b.major_version >= 7 ? b.major_version - 6 : 0;
+      const int pow_variant = major_version >= 7 ? major_version - 6 : 0;
       crypto::cn_slow_hash(bd.data(), bd.size(), res, pow_variant, height);
     }
     return true;
+  }
+
+
+  bool get_block_longhash(const Blockchain *pbc, const block& b, crypto::hash& res, const uint64_t height, const crypto::hash *seed_hash, const int miners)
+  {
+    blobdata bd = get_block_hashing_blob(b);
+	 return get_block_longhash(pbc, bd, res, height, b.major_version, seed_hash, miners);
   }
 
   bool get_block_longhash(const Blockchain *pbc, const block& b, crypto::hash& res, const uint64_t height, const int miners)

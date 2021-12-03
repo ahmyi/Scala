@@ -567,6 +567,8 @@ void Blockchain::pop_blocks(uint64_t nblocks)
     return;
   }
 
+  CHECK_AND_ASSERT_THROW_MES(update_next_cumulative_weight_limit(), "Error updating next cumulative weight limit");
+
   if (stop_batch)
     m_db->batch_stop();
 }
@@ -587,6 +589,7 @@ block Blockchain::pop_block_from_blockchain()
 
   CHECK_AND_ASSERT_THROW_MES(m_db->height() > 1, "Cannot pop the genesis block");
 
+  const uint8_t previous_hf_version = get_current_hard_fork_version();
   try
   {
     m_db->pop_block(popped_block, popped_txs);
@@ -644,11 +647,17 @@ block Blockchain::pop_block_from_blockchain()
   m_scan_table.clear();
   m_blocks_txs_check.clear();
 
-  CHECK_AND_ASSERT_THROW_MES(update_next_cumulative_weight_limit(), "Error updating next cumulative weight limit");
   uint64_t top_block_height;
   crypto::hash top_block_hash = get_tail_id(top_block_height);
   m_tx_pool.on_blockchain_dec(top_block_height, top_block_hash);
   invalidate_block_template_cache();
+
+  const uint8_t new_hf_version = get_current_hard_fork_version();
+  if (new_hf_version != previous_hf_version)
+  {
+    MINFO("Validating txpool for v" << (unsigned)new_hf_version);
+    m_tx_pool.validate(new_hf_version);
+  }
 
   return popped_block;
 }
@@ -1117,6 +1126,7 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
   {
     pop_block_from_blockchain();
   }
+  CHECK_AND_ASSERT_THROW_MES(update_next_cumulative_weight_limit(), "Error updating next cumulative weight limit");
 
   // make sure the hard fork object updates its current version
   m_hardfork->reorganize_from_chain_height(rollback_height);
@@ -1167,6 +1177,7 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<block_extended_info>
     block b = pop_block_from_blockchain();
     disconnected_chain.push_front(b);
   }
+  CHECK_AND_ASSERT_THROW_MES(update_next_cumulative_weight_limit(), "Error updating next cumulative weight limit");
 
   auto split_height = m_db->height();
 
@@ -1241,6 +1252,12 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<block_extended_info>
   if (reorg_notify)
     reorg_notify->notify("%s", std::to_string(split_height).c_str(), "%h", std::to_string(m_db->height()).c_str(),
         "%n", std::to_string(m_db->height() - split_height).c_str(), "%d", std::to_string(discarded_blocks).c_str(), NULL);
+
+  crypto::hash prev_id;
+  if (!get_block_hash(alt_chain.back().bl, prev_id))
+    MERROR("Failed to get block hash of an alternative chain's tip");
+  else
+    send_miner_notifications(prev_id, alt_chain.back().already_generated_coins);
 
   for (const auto& notifier : m_block_notifiers)
   {
@@ -1795,6 +1812,30 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
 bool Blockchain::create_block_template(block& b, const account_public_address& miner_address, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce, uint64_t &seed_height, crypto::hash &seed_hash)
 {
   return create_block_template(b, NULL, miner_address, diffic, height, expected_reward, ex_nonce, seed_height, seed_hash);
+}
+//------------------------------------------------------------------
+bool Blockchain::get_miner_data(uint8_t& major_version, uint64_t& height, crypto::hash& prev_id, crypto::hash& seed_hash, difficulty_type& difficulty, uint64_t& median_weight, uint64_t& already_generated_coins, std::vector<tx_block_template_backlog_entry>& tx_backlog)
+{
+  prev_id = m_db->top_block_hash(&height);
+  ++height;
+
+  major_version = m_hardfork->get_ideal_version(height);
+
+  seed_hash = crypto::null_hash;
+  if (m_hardfork->get_current_version() >= RX_BLOCK_VERSION)
+  {
+    uint64_t seed_height, next_height;
+    crypto::rx_seedheights(height, &seed_height, &next_height);
+    seed_hash = get_block_id_by_height(seed_height);
+  }
+
+  difficulty = get_difficulty_for_next_block();
+  median_weight = m_current_block_cumul_weight_median;
+  already_generated_coins = m_db->get_block_already_generated_coins(height - 1);
+
+  m_tx_pool.get_block_template_backlog(tx_backlog);
+
+  return true;
 }
 //------------------------------------------------------------------
 // for an alternate chain, get the timestamps from the main chain to complete
@@ -2625,7 +2666,7 @@ bool Blockchain::get_split_transactions_blobs(const t_ids_container& txs_ids, t_
 }
 //------------------------------------------------------------------
 template<class t_ids_container, class t_tx_container, class t_missed_container>
-bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const
+bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs, bool pruned) const
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
@@ -2636,10 +2677,12 @@ bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container
     try
     {
       cryptonote::blobdata tx;
-      if (m_db->get_tx_blob(tx_hash, tx))
+      bool res = pruned ? m_db->get_pruned_tx_blob(tx_hash, tx) : m_db->get_tx_blob(tx_hash, tx);
+      if (res)
       {
         txs.push_back(transaction());
-        if (!parse_and_validate_tx_from_blob(tx, txs.back()))
+        res = pruned ? parse_and_validate_tx_base_from_blob(tx, txs.back()) : parse_and_validate_tx_from_blob(tx, txs.back());
+        if (!res)
         {
           LOG_ERROR("Invalid transaction");
           return false;
@@ -4281,6 +4324,20 @@ leave:
   invalidate_block_template_cache();
   
 
+  const uint8_t new_hf_version = get_current_hard_fork_version();
+  if (new_hf_version != hf_version)
+  {
+    // the genesis block is added before everything's setup, and the txpool is empty
+    // when we start from scratch, so we skip this
+    const bool is_genesis_block = new_height == 1;
+    if (!is_genesis_block)
+    {
+      MGINFO("Validating txpool for v" << (unsigned)new_hf_version);
+      m_tx_pool.validate(new_hf_version);
+    }
+  }
+
+  send_miner_notifications(id, already_generated_coins);
 
   for (const auto& notifier: m_block_notifiers)
     notifier(new_height - 1, {std::addressof(bl), 1});
@@ -4909,6 +4966,8 @@ bool Blockchain::prepare_handle_incoming_blocks(const std::vector<block_complete
         unsigned nblocks = batches;
         if (i < extra)
           ++nblocks;
+        if (nblocks == 0)
+          break;
         tpool.submit(&waiter, boost::bind(&Blockchain::block_longhash_worker, this, thread_height, epee::span<const block>(&blocks[thread_height - height], nblocks), std::ref(maps[i])), true);
         thread_height += nblocks;
       }
@@ -5074,7 +5133,7 @@ bool Blockchain::prepare_handle_incoming_blocks(const std::vector<block_complete
     if (m_cancel)
       return false;
 
-    for (const auto &tx_blob : entry.txs)
+    for (size_t i = 0; i < entry.txs.size(); ++i)
     {
       if (tx_index >= txes.size())
         SCAN_TABLE_QUIT("tx_index is out of sync");
@@ -5189,12 +5248,21 @@ void Blockchain::set_user_options(uint64_t maxthreads, bool sync_on_blocks, uint
   m_max_prepare_blocks_threads = maxthreads;
 }
 
-void Blockchain::add_block_notify(boost::function<void(std::uint64_t, epee::span<const block>)>&& notify)
+void Blockchain::add_block_notify(BlockNotifyCallback&& notify)
 {
   if (notify)
   {
     CRITICAL_REGION_LOCAL(m_blockchain_lock);
     m_block_notifiers.push_back(std::move(notify));
+  }
+}
+
+void Blockchain::add_miner_notify(MinerNotifyCallback&& notify)
+{
+  if (notify)
+  {
+    CRITICAL_REGION_LOCAL(m_blockchain_lock);
+    m_miner_notifiers.push_back(std::move(notify));
   }
 }
 
@@ -5450,7 +5518,34 @@ void Blockchain::cache_block_template(const block &b, const cryptonote::account_
   m_btc_valid = true;
 }
 
+void Blockchain::send_miner_notifications(const crypto::hash &prev_id, uint64_t already_generated_coins)
+{
+  if (m_miner_notifiers.empty())
+    return;
+
+  const uint64_t height = m_db->height();
+  const uint8_t major_version = m_hardfork->get_ideal_version(height);
+  const difficulty_type diff = get_difficulty_for_next_block();
+  const uint64_t median_weight = m_current_block_cumul_weight_median;
+
+  crypto::hash seed_hash = crypto::null_hash;
+  if (m_hardfork->get_current_version() >= RX_BLOCK_VERSION)
+  {
+    uint64_t seed_height, next_height;
+    crypto::rx_seedheights(height, &seed_height, &next_height);
+    seed_hash = get_block_id_by_height(seed_height);
+  }
+
+  std::vector<tx_block_template_backlog_entry> tx_backlog;
+  m_tx_pool.get_block_template_backlog(tx_backlog);
+
+  for (const auto& notifier : m_miner_notifiers)
+  {
+    notifier(major_version, height, prev_id, seed_hash, diff, median_weight, already_generated_coins, tx_backlog);
+  }
+}
+
 namespace cryptonote {
-template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::vector<transaction>&, std::vector<crypto::hash>&) const;
+template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::vector<transaction>&, std::vector<crypto::hash>&, bool) const;
 template bool Blockchain::get_split_transactions_blobs(const std::vector<crypto::hash>&, std::vector<std::tuple<crypto::hash, cryptonote::blobdata, crypto::hash, cryptonote::blobdata>>&, std::vector<crypto::hash>&) const;
 }

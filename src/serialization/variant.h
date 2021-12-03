@@ -75,7 +75,7 @@ struct variant_reader
       current_type x;
       if(!::do_serialize(ar, x))
       {
-        ar.stream().setstate(std::ios::failbit);
+        ar.set_fail();
         return false;
       }
       v = x;
@@ -96,7 +96,7 @@ struct variant_reader<Archive, Variant, TBegin, TBegin>
 
   static inline bool read(Archive &ar, Variant &v, variant_tag_type t)
   {
-    ar.stream().setstate(std::ios::failbit);
+    ar.set_fail();
     return false;
   }
 };
@@ -117,7 +117,7 @@ struct serializer<Archive<false>, boost::variant<BOOST_VARIANT_ENUM_PARAMS(T)>>
        typename boost::mpl::begin<types>::type,
        typename boost::mpl::end<types>::type>::read(ar, v, t))
     {
-      ar.stream().setstate(std::ios::failbit);
+      ar.set_fail();
       return false;
     }
     ar.end_variant();
@@ -144,7 +144,7 @@ struct serializer<Archive<true>, boost::variant<BOOST_VARIANT_ENUM_PARAMS(T)>>
       ar.write_variant_tag(variant_serialization_traits<Archive<true>, T>::get_tag());
       if(!::do_serialize(ar, rv))
       {
-        ar.stream().setstate(std::ios::failbit);
+        ar.set_fail();
         return false;
       }
       ar.end_variant();
