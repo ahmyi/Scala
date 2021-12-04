@@ -612,7 +612,7 @@ std::string get_nix_version_display_string()
 #ifdef WIN32
     config_folder = get_special_folder_path(CSIDL_COMMON_APPDATA, true) + "\\" + CRYPTONOTE_NAME;
     if(ipfs == true)
-      config_folder += "\\" + libipfs_folder
+      config_folder += "\\" + libipfs_folder;
 #else
     std::string pathRet;
     char* pszHome = getenv("HOME");
