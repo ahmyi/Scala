@@ -34,35 +34,44 @@ We no longer support 32-bit platforms, we use go-ipfs extensively as part of our
 The following table summarizes the tools and libraries required to build. A few of the libraries are also included in this repository (marked as
 "Vendored"). By default, the build uses the library installed on the system, and ignores the vendored sources. However, if no library is found installed on the system, then the vendored source will be built and used. The vendored sources are also used for statically-linked builds because distribution packages often include only shared library binaries (`.so`) but not static library archives (`.a`).
 
-| Dep         | Min. version  | Debian/Ubuntu pkg    | Arch pkg     | Void pkg          | Fedora pkg          |
-| ----------- | ------------- | -------------------- | ------------ | ----------------- | ------------------- |
-| GCC         | 4.7.3         | `build-essential`    | `base-devel` | `base-devel`      | `gcc`               |
-| CMake       | 3.5           | `cmake`              | `cmake`      | `cmake`           | `cmake`             |
-| pkg-config  | any           | `pkg-config`         | `base-devel` | `base-devel`      | `pkgconf`           |
-| Boost       | 1.58          | `libboost-all-dev`   | `boost`      | `boost-devel`     | `boost-devel`       |
-| OpenSSL     | basically any | `libssl-dev`         | `openssl`    | `libressl-devel`  | `openssl-devel`     |
-| libzmq      | 3.0.0         | `libzmq3-dev`        | `zeromq`     | `zeromq-devel`    | `zeromq-devel`      |
-| OpenPGM     | ?             | `libpgm-dev`         | `libpgm`     |                   | `openpgm-devel`     |
-| libnorm[2]  | ?             | `libnorm-dev`        |              |                   |                     |
-| libunbound  | 1.4.16        | `libunbound-dev`     | `unbound`    | `unbound-devel`   | `unbound-devel`     |
-| libsodium   | ?             | `libsodium-dev`      | `libsodium`  | `libsodium-devel` | `libsodium-devel`   |
-| libunwind   | any           | `libunwind8-dev`     | `libunwind`  | `libunwind-devel` | `libunwind-devel`   |
-| liblzma     | any           | `liblzma-dev`        | `xz`         | `liblzma-devel`   | `xz-devel`          |
-| libreadline | 6.3.0         | `libreadline6-dev`   | `readline`   | `readline-devel`  | `readline-devel`    |
-| ldns        | 1.6.17        | `libldns-dev`        | `ldns`       | `libldns-devel`   | `ldns-devel`        |
-| expat       | 1.1           | `libexpat1-dev`      | `expat`      | `expat-devel`     | `expat-devel`       |
-| GTest       | 1.5           | `libgtest-dev`[1]    | `gtest`      | `gtest-devel`     | `gtest-devel`       |
-| Doxygen     | any           | `doxygen`            | `doxygen`    | `doxygen`         | `doxygen`           |
-| Graphviz    | any           | `graphviz`           | `graphviz`   | `graphviz`        | `graphviz`          |
-| lrelease    | ?             | `qttools5-dev-tools` | `qt5-tools`  | `qt5-tools`       | `qt5-linguist`      |
-| libhidapi   | ?             | `libhidapi-dev`      | `hidapi`     | `hidapi-devel`    | `hidapi-devel`      |
-| libusb      | ?             | `libusb-dev`         | `libusb`     | `libusb-devel`    | `libusb-devel`      |
-| libprotobuf | ?             | `libprotobuf-dev`    | `protobuf`   | `protobuf-devel`  | `protobuf-devel`    |
-| protoc      | ?             | `protobuf-compiler`  | `protobuf`   | `protobuf`        | `protobuf-compiler` |
+| Dep          | Min. version  | Vendored | Debian/Ubuntu pkg    | Arch pkg     | Void pkg           | Fedora pkg          | Optional | Purpose         |
+| ------------ | ------------- | -------- | -------------------- | ------------ | ------------------ | ------------------- | -------- | --------------- |
+| GCC          | 5             | NO       | `build-essential`    | `base-devel` | `base-devel`       | `gcc`               | NO       |                 |
+| CMake        | 3.5           | NO       | `cmake`              | `cmake`      | `cmake`            | `cmake`             | NO       |                 |
+| pkg-config   | any           | NO       | `pkg-config`         | `base-devel` | `base-devel`       | `pkgconf`           | NO       |                 |
+| Boost        | 1.58          | NO       | `libboost-all-dev`   | `boost`      | `boost-devel`      | `boost-devel`       | NO       | C++ libraries   |
+| OpenSSL      | basically any | NO       | `libssl-dev`         | `openssl`    | `libressl-devel`   | `openssl-devel`     | NO       | sha256 sum      |
+| libzmq       | 4.2.0         | NO       | `libzmq3-dev`        | `zeromq`     | `zeromq-devel`     | `zeromq-devel`      | NO       | ZeroMQ library  |
+| OpenPGM      | ?             | NO       | `libpgm-dev`         | `libpgm`     |                    | `openpgm-devel`     | NO       | For ZeroMQ      |
+| libnorm[2]   | ?             | NO       | `libnorm-dev`        |              |                    |                     | YES      | For ZeroMQ      |
+| libunbound   | 1.4.16        | YES      | `libunbound-dev`     | `unbound`    | `unbound-devel`    | `unbound-devel`     | NO       | DNS resolver    |
+| libsodium    | ?             | NO       | `libsodium-dev`      | `libsodium`  | `libsodium-devel`  | `libsodium-devel`   | NO       | cryptography    |
+| libunwind    | any           | NO       | `libunwind8-dev`     | `libunwind`  | `libunwind-devel`  | `libunwind-devel`   | YES      | Stack traces    |
+| liblzma      | any           | NO       | `liblzma-dev`        | `xz`         | `liblzma-devel`    | `xz-devel`          | YES      | For libunwind   |
+| libreadline  | 6.3.0         | NO       | `libreadline6-dev`   | `readline`   | `readline-devel`   | `readline-devel`    | YES      | Input editing   |
+| ldns         | 1.6.17        | NO       | `libldns-dev`        | `ldns`       | `libldns-devel`    | `ldns-devel`        | YES      | SSL toolkit     |
+| expat        | 1.1           | NO       | `libexpat1-dev`      | `expat`      | `expat-devel`      | `expat-devel`       | YES      | XML parsing     |
+| GTest        | 1.5           | YES      | `libgtest-dev`[1]    | `gtest`      | `gtest-devel`      | `gtest-devel`       | YES      | Test suite      |
+| ccache       | any           | NO       | `ccache`             | `ccache`     | `ccache`           | `ccache`            | YES      | Compil. cache   |
+| Doxygen      | any           | NO       | `doxygen`            | `doxygen`    | `doxygen`          | `doxygen`           | YES      | Documentation   |
+| Graphviz     | any           | NO       | `graphviz`           | `graphviz`   | `graphviz`         | `graphviz`          | YES      | Documentation   |
+| lrelease     | ?             | NO       | `qttools5-dev-tools` | `qt5-tools`  | `qt5-tools`        | `qt5-linguist`      | YES      | Translations    |
+| libhidapi    | ?             | NO       | `libhidapi-dev`      | `hidapi`     | `hidapi-devel`     | `hidapi-devel`      | YES      | Hardware wallet |
+| libusb       | ?             | NO       | `libusb-1.0-0-dev`   | `libusb`     | `libusb-devel`     | `libusbx-devel`     | YES      | Hardware wallet |
+| libprotobuf  | ?             | NO       | `libprotobuf-dev`    | `protobuf`   | `protobuf-devel`   | `protobuf-devel`    | YES      | Hardware wallet |
+| protoc       | ?             | NO       | `protobuf-compiler`  | `protobuf`   | `protobuf`         | `protobuf-compiler` | YES      | Hardware wallet |
+| libudev      | ?             | No       | `libudev-dev`        | `systemd`    | `eudev-libudev-devel` | `systemd-devel`  | YES      | Hardware wallet |
 
 
 [1] On Debian/Ubuntu `libgtest-dev` only includes sources and headers. You must
-build the library binary manually. This can be done with the following command ```sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/ ```
+build the library binary manually. This can be done with the following command `sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make`
+then:
+
+* on Debian:
+  `sudo mv libg* /usr/lib/`
+* on Ubuntu:
+  `sudo mv lib/libg* /usr/lib/`
+
 [2] libnorm-dev is needed if your zmq library was built with libnorm, and not needed otherwise
 
 Install all dependencies at once on Debian/Ubuntu:
@@ -72,8 +81,8 @@ Install all dependencies at once on Debian/Ubuntu:
 Install all dependencies at once on macOS with the provided Brewfile:
 ``` brew update && brew bundle --file=contrib/brew/Brewfile ```
 
-FreeBSD one liner for required to build dependencies
-```pkg install git gmake cmake pkgconf boost-libs libzmq libsodium```
+FreeBSD 12.1 one-liner required to build dependencies:
+```pkg install git gmake cmake pkgconf boost-libs libzmq4 libsodium unbound```
 
 ### Cloning the repository
 
@@ -164,14 +173,26 @@ Binaries for Windows are built on Windows using the MinGW toolchain within [MSYS
   pacman -Syu
   ```
 
+* Restart MSYS shell via modified shortcut and update packages again using pacman:  
 
-* Install dependencies:
+  ```bash
+  pacman -Syu
+  ```
 
   To build for 64-bit Windows:
 
+    ```bash
+    pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-boost mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi mingw-w64-x86_64-unbound
+    ```
   ```bash
   pacman -S mingw-w64-x86_64-toolchain make mingw-w64-x86_64-cmake mingw-w64-x86_64-boost mingw-w64-x86_64-openssl mingw-w64-x86_64-zeromq mingw-w64-x86_64-libsodium mingw-w64-x86_64-hidapi
   ```
+
+  To build for 64-bit Windows:
+
+    ```bash
+    pacman -S mingw-w64-i686-toolchain make mingw-w64-i686-cmake mingw-w64-i686-boost mingw-w64-i686-openssl mingw-w64-i686-zeromq mingw-w64-i686-libsodium mingw-w64-i686-hidapi mingw-w64-i686-unbound
+    ```
 
 * Open the MingW shell via `MinGW-w64-Win64 Shell` shortcut on 64-bit Windows
 

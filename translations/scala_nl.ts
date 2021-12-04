@@ -4506,7 +4506,7 @@ This transaction (including %s change) will unlock on block %llu, in approximate
     </message>
     <message>
         <location filename="../src/simplewallet/simplewallet.cpp" line="7388"/>
-        <source>Donating %s %s to The Monero Project (donate.getscala.org or %s).</source>
+        <source>Donating %s %s to The Scala Project (donate.scalaproject.io or %s).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

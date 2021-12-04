@@ -35,12 +35,13 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "misc_log_ex.h"
+#include "daemon/command_line_args.h"
 #include "rapidjson/document.h"
 #include "common/command_line.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     #include "libipfs/include/libipfs-windows.h"
-#elif __APPLE__
+#elif  defined(__APPLE__)
     #include "libipfs/include/libipfs-macos.h"
 #else
     #include "libipfs/include/libipfs-linux.h"
@@ -75,8 +76,7 @@ public:
     , m_vm_HACK{vm}
   {
     //initialize core here
-    MGINFO("Initializing core...");
-    if(!(command_line::has_arg(vm, cryptonote::arg_disable_ipfs))){
+ if(!(command_line::has_arg(vm, cryptonote::arg_disable_ipfs))){
       MGINFO("Initializing IPFS...");
       const char* IPFSstartMessage = IPFSStartNode((char*)"./");
       Document startMessage;
@@ -101,6 +101,8 @@ public:
     }else{
       MGINFO("Not starting IPFS daemon...");
     }
+
+    Document startMessage;
     #if defined(PER_BLOCK_CHECKPOINT)
         const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
     #else
