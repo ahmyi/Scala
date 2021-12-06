@@ -46,11 +46,11 @@
 #include "rapidjson/istreamwrapper.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
-    #include "libipfs/include/libipfs-windows.h"
+    #include "libipfs-windows.h"
 #elif  defined(__APPLE__)
-    #include "libipfs/include/libipfs-macos.h"
+    #include "libipfs-macos-x64.h"
 #else
-    #include "libipfs/include/libipfs-linux.h"
+    #include "libipfs-linux.h"
 #endif
 
 using namespace rapidjson;

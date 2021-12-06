@@ -449,24 +449,52 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/supercop/include external/include/libipfs/include)
+# Download and Unzip libipfs
+
+set(LIBIPFS_VERSION "v2.2.0")
+
+if(UNIX AND NOT APPLE)
+  set(LIBIPFS_PLATFORM "linux-x64")
+  set(LIBIPFS_HEADER_NAME "libipfs-linux.h")
+  set(LIBIPFS_LIBRARY_NAME "libipfs-linux.a")
+elseif(APPLE OR MACOS)
+  set(LIBIPFS_PLATFORM "macOS-x64")
+  set(LIBIPFS_HEADER_NAME "libipfs-macos-x64.h")
+  set(LIBIPFS_LIBRARY_NAME "libipfs-macos-x64.a")
+else()
+  set(LIBIPFS_PLATFORM "win-x64")
+  set(LIBIPFS_HEADER_NAME "libipfs-windows.h")
+  set(LIBIPFS_LIBRARY_NAME "libipfs-windows.a")
+endif()
+
+file(DOWNLOAD "https://github.com/scala-network/libipfs/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
+    "${CMAKE_CURRENT_BINARY_DIR}/libipfs-${LIBIPFS_PLATFORM}.zip"
+    SHOW_PROGRESS)
+
+set(LIBIPFS_ZIP_NAME "libipfs-${LIBIPFS_PLATFORM}.zip")
+file(ARCHIVE_EXTRACT 
+     INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LIBIPFS_ZIP_NAME}" 
+     DESTINATION "${CMAKE_SOURCE_DIR}/external/libipfs"
+     VERBOSE)
+     
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/supercop/include "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}")
 
 # Find the libipfs library for each platform
 if(UNIX AND NOT APPLE)
     if(NOT DEPENDS)
-      find_library(LIBIPFS NAMES ipfs-linux PATHS "${CMAKE_SOURCE_DIR}/external/libipfs" REQUIRED)
+      find_library(LIBIPFS NAMES ipfs-linux PATHS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}" REQUIRED)
     else()
-      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-linux.a")
+      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}/libipfs-linux.a")
     endif()
 elseif(MACOS OR APPLE)
     list(APPEND EXTRA_LIBRARIES "-framework CoreFoundation -framework Security")
     if(NOT DEPENDS)
-      find_library(LIBIPFS NAMES ipfs-macos PATHS "${CMAKE_SOURCE_DIR}/external/libipfs" REQUIRED)
+      find_library(LIBIPFS NAMES ipfs-macos PATHS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}" REQUIRED)
     else()
-      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-macos.a")
+      set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}/${LIBIPFS_LIBRARY_NAME}")
     endif()
 else()
-    set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-windows.a")
+    set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}/${LIBIPFS_LIBRARY_NAME}")
 endif()
 
 if(APPLE)
