@@ -834,23 +834,15 @@ bool Blockchain::get_block_by_hash(const crypto::hash &h, block &blk, bool *orph
 // last DIFFICULTY_BLOCKS_COUNT_NEW blocks and passes them to next_difficulty,
 // returning the result of that call.  Ignores the genesis block, and can use
 // less blocks than desired if there aren't enough.
+
 difficulty_type Blockchain::get_difficulty_for_next_block()
 {
-  LOG_PRINT_L3("Blockchain::" << __func__);
-
-  std::stringstream ss;
-  bool print = false;
-
-  int done = 0;
-  ss << "get_difficulty_for_next_block: height " << m_db->height() << std::endl;
-
   if (m_fixed_difficulty)
   {
     return m_db->height() ? m_fixed_difficulty : 1;
   }
 
-start:
-  difficulty_type D = 0;
+  LOG_PRINT_L3("Blockchain::" << __func__);
 
   crypto::hash top_hash = get_tail_id();
   {
@@ -859,23 +851,16 @@ start:
     // something a bit out of date, but that's fine since anything which
     // requires the blockchain lock will have acquired it in the first place,
     // and it will be unlocked only when called from the getinfo RPC
-    ss << "Locked, tail id " << top_hash << ", cached is " << m_difficulty_for_next_block_top_hash << std::endl;
     if (top_hash == m_difficulty_for_next_block_top_hash)
-    {
-      ss << "Same, using cached diff " << m_difficulty_for_next_block << std::endl;
-      D = m_difficulty_for_next_block;
-    }
+      return m_difficulty_for_next_block;
   }
 
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
   std::vector<uint64_t> timestamps;
   std::vector<difficulty_type> difficulties;
   uint64_t height;
-  auto new_top_hash = get_tail_id(height); // get it again now that we have the lock
-  ++height;
-  if (!(new_top_hash == top_hash)) D=0;
-  ss << "Re-locked, height " << height << ", tail id " << new_top_hash << (new_top_hash == top_hash ? "" : " (different)") << std::endl;
-  top_hash = new_top_hash;
+  top_hash = get_tail_id(height); // get it again now that we have the lock
+  ++height; // top block height to blockchain height
 
   // Reset network hashrate to 1.0 MH/s when V7 goes live
   if (m_nettype == MAINNET && (uint64_t)height >= 20 && (uint64_t)height <= 20 + (uint64_t)DIFFICULTY_BLOCKS_COUNT){
@@ -886,32 +871,25 @@ start:
   // 1. Keep a list of the last 735 (or less) blocks that is used to compute difficulty,
   //    then when the next block difficulty is queried, push the latest height data and
   //    pop the oldest one from the list. This only requires 1x read per height instead
-  //    of doing 735 (DIFFICULTY_BLOCKS_COUNT_NEW).
-  bool check = false;
-  if (m_reset_timestamps_and_difficulties_height)
-    m_timestamps_and_difficulties_height = 0;
-  if (m_timestamps_and_difficulties_height != 0 && ((height - m_timestamps_and_difficulties_height) == 1) && m_timestamps.size() >= DIFFICULTY_BLOCKS_COUNT_NEW)
+  //    of doing 735 (DIFFICULTY_BLOCKS_COUNT).
+  if (m_timestamps_and_difficulties_height != 0 && ((height - m_timestamps_and_difficulties_height) == 1) && m_timestamps.size() >= DIFFICULTY_BLOCKS_COUNT)
   {
     uint64_t index = height - 1;
     m_timestamps.push_back(m_db->get_block_timestamp(index));
     m_difficulties.push_back(m_db->get_block_cumulative_difficulty(index));
 
-    while (m_timestamps.size() > DIFFICULTY_BLOCKS_COUNT_NEW)
+    while (m_timestamps.size() > DIFFICULTY_BLOCKS_COUNT)
       m_timestamps.erase(m_timestamps.begin());
-    while (m_difficulties.size() > DIFFICULTY_BLOCKS_COUNT_NEW)
+    while (m_difficulties.size() > DIFFICULTY_BLOCKS_COUNT)
       m_difficulties.erase(m_difficulties.begin());
 
     m_timestamps_and_difficulties_height = height;
     timestamps = m_timestamps;
     difficulties = m_difficulties;
-    check = true;
   }
-  //else
-  std::vector<uint64_t> timestamps_from_cache = timestamps;
-  std::vector<difficulty_type> difficulties_from_cache = difficulties;
-
+  else
   {
-    uint64_t offset = height - std::min <uint64_t> (height, static_cast<uint64_t>(DIFFICULTY_BLOCKS_COUNT_NEW));
+    uint64_t offset = height - std::min <uint64_t> (height, static_cast<uint64_t>(DIFFICULTY_BLOCKS_COUNT));
     if (offset == 0)
       ++offset;
 
@@ -922,68 +900,22 @@ start:
       timestamps.reserve(height - offset);
       difficulties.reserve(height - offset);
     }
-    ss << "Looking up " << (height - offset) << " from " << offset << std::endl;
     for (; offset < height; offset++)
     {
       timestamps.push_back(m_db->get_block_timestamp(offset));
       difficulties.push_back(m_db->get_block_cumulative_difficulty(offset));
     }
 
-    if (check) if (timestamps != timestamps_from_cache || difficulties !=difficulties_from_cache)
-    {
-      ss << "Inconsistency XXX:" << std::endl;
-      ss << "top hash: "<<top_hash << std::endl;
-      ss << "timestamps: " << timestamps_from_cache.size() << " from cache, but " << timestamps.size() << " without" << std::endl;
-      ss << "difficulties: " << difficulties_from_cache.size() << " from cache, but " << difficulties.size() << " without" << std::endl;
-      ss << "timestamps_from_cache:" << std::endl; for (const auto &v :timestamps_from_cache) ss << "  " << v << std::endl;
-      ss << "timestamps:" << std::endl; for (const auto &v :timestamps) ss << "  " << v << std::endl;
-      ss << "difficulties_from_cache:" << std::endl; for (const auto &v :difficulties_from_cache) ss << "  " << v << std::endl;
-      ss << "difficulties:" << std::endl; for (const auto &v :difficulties) ss << "  " << v << std::endl;
-
-      uint64_t dbh = m_db->height();
-      uint64_t sh = dbh < 10000 ? 0 : dbh - 10000;
-      ss << "History from -10k at :" << dbh << ", from " << sh << std::endl;
-      for (uint64_t h = sh; h < dbh; ++h)
-      {
-        uint64_t ts = m_db->get_block_timestamp(h);
-        difficulty_type d = m_db->get_block_cumulative_difficulty(h);
-        ss << "  " << h << " " << ts << " " << d << std::endl;
-      }
-      print = true;
-    }
     m_timestamps_and_difficulties_height = height;
     m_timestamps = timestamps;
     m_difficulties = difficulties;
   }
-
   size_t target = get_difficulty_target();
   difficulty_type diff = next_difficulty(timestamps, difficulties, target);
 
   CRITICAL_REGION_LOCAL1(m_difficulty_lock);
   m_difficulty_for_next_block_top_hash = top_hash;
   m_difficulty_for_next_block = diff;
-  if (D && D != diff)
-  {
-    ss << "XXX Mismatch at " << height << "/" << top_hash << "/" << get_tail_id() << ": cached " << D << ", real " << diff << std::endl;
-    print = true;
-  }
-
-  ++done;
-  if (done == 1 && D && D != diff)
-  {
-    print = true;
-    ss << "Might be a race. Let's see what happens if we try again..." << std::endl;
-    epee::misc_utils::sleep_no_w(100);
-    goto start;
-  }
-  ss << "Diff for " << top_hash << ": " << diff << std::endl;
-  if (print)
-  {
-    MGINFO("START DUMP");
-    MGINFO(ss.str());
-    MGINFO("END DUMP");
-    MGINFO("Please send scalamooo on Freenode the contents of this log, from a couple dozen lines before START DUMP to END DUMP");
-  }
   return diff;
 }
 //------------------------------------------------------------------
@@ -1420,7 +1352,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
 
   if ((version >= 2) && (m_db->height() >= 16)) {
   std::string diardi_maintainer_address;
-  diardi_maintainer_address = diardi_index_to_reward(m_db->height());
+  diardi_maintainer_address = diardi_pre_v8_maintainer(m_db->height());
 
   	if (already_generated_coins != 0){
 		uint64_t diardi_reward = get_diardi_reward(m_db->height(), base_reward);
@@ -4049,7 +3981,9 @@ leave:
     // validate proof_of_work versus difficulty target
     if(!check_hash(proof_of_work, current_diffic))
     {
-      MERROR_VER("Block with id: " << id << std::endl << "does not have enough proof of work: " << proof_of_work << " at height " << blockchain_height << ", unexpected difficulty: " << current_diffic);
+      MERROR_VER("Block with id: " << id << std::endl << 
+      "does not have enough proof of work: " << proof_of_work << 
+      " at height " << blockchain_height << ", unexpected difficulty: " << current_diffic);
       bvc.m_verifivation_failed = true;
       bvc.m_bad_pow = true;
       goto leave;

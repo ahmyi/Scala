@@ -1,4 +1,4 @@
-//Copyright (c) 2014-2019, The Monero Project
+//Copyright (c) 2018-2021, The Monero Project
 //
 // All rights reserved.
 //
@@ -30,9 +30,6 @@
 
 #include "diardi.h"
 
-/* This is here because the epee libraries seem to have a problem with cloudflare workers */
-#include "HTTPRequest.hpp"
-
 using namespace epee;
 
 #undef SCALA_DEFAULT_LOG_CATEGORY
@@ -40,189 +37,138 @@ using namespace epee;
 
 namespace cryptonote
 {
-    const std::vector<std::string> diardi::offlineSeedList = {"62.171.149.67:11811", "164.68.117.160:11811"};
-    const std::vector<std::string> diardi::offlineBansList = {};
-    const std::string diardi::seedsName = "seeds.scalaproject.io";
-    const std::string diardi::bansName = "bans.scalaproject.io";
-    const std::string diardi:: staticCheckpointsName = "static-checkpoints.scalaproject.io";
+    const std::vector<std::string> diardi::offline_seed_list = {
+        "62.171.149.67:11811", 
+        "164.68.117.160:11811"
+    };
+    const std::vector<std::string> diardi::offline_ban_list = {};
+    const std::string diardi::seed_list_ipns_name = "seeds.scalaproject.io";
+    const std::string diardi::ban_list_ipns_name = "bans.scalaproject.io";
 
-    const std::string diardi::fallBackHistorical = "http://fallback-historical-checkpoints.scalaproject.io/";
-    const std::string diardi::localGatewayIPNS = "http://127.0.0.1:11815/ipns/";
-    const std::string diardi::localGatewayIPFS = "http://127.0.0.1:11815/ipfs/";
-    const std::string diardi::errorDat = "error:error";
+    const std::string diardi::checkpoints_ipns_name_mainnet = "/ipns/static-checkpoints-mainnet.scalaproject.io";
+    const std::string diardi::checkpoints_ipns_name_testnet = "/ipns/static-checkpoints-testnet.scalaproject.io";
+    const std::string diardi::checkpoints_ipns_name_stagenet = "/ipns/static-checkpoints-stagenet.scalaproject.io";
 
-    const std::vector<std::string> diardi::notaryNodes = {
-            "alpha.scalaproject.io",
-            "beta.scalaproject.io",
-            "gamma.scalaproject.io",
-            "delta.scalaproject.io",
-            "epsilon.scalaproject.io",
-            "zeta.scalaproject.io",
-            "eta.scalaproject.io",
-            "theta.scalaproject.io",
-            "iota.scalaproject.io",
-            "kappa.scalaproject.io",
-            "lambda.scalaproject.io",
-            "pi.scalaproject.io",
-            "sigma.scalaproject.io",
-            "phi.scalaproject.io",
-            "omega.scalaproject.io",
-            "zed.scalaproject.io"
+    const std::vector<std::string> diardi::diardi_v1_addresses = {
+        "SvjVucMW4PA968WJP7rXRr1fkRVch5q6rLnh86LkZCWFPJiDEB2vizX6VjMezJaKiCN2K1kVvAHDbUmiB1tPjZJP2hety4dnf",
+        "SvjVucMW4PA968WJP7rXRr1fkRVch5q6rLnh86LkZCWFPJiDEB2vizX6VjMezJaKiCN2K1kVvAHDbUmiB1tPjZJP2hety4dnf",
+        "Svkw5aecRCmgru6t4Jigi9KN3HrENz3VmFVtBmaGJhNVWmUGc6hv5P9Qhi6Uivns49BG1H6WBVWoY85Si8PdYcfN2umFos7KU",
+        "Svkw5aecRCmgru6t4Jigi9KN3HrENz3VmFVtBmaGJhNVWmUGc6hv5P9Qhi6Uivns49BG1H6WBVWoY85Si8PdYcfN2umFos7KU",
+        "SvkdzwcuUzy1p25pvipH5QB4usEGJ9aBB7ucPrg2fvoKQh8jW6wQnYYTdFsQ6Gg2uVPPLgWt1pzaKVa6zeTmfv3j2XLefxByh",
+        "SvkdzwcuUzy1p25pvipH5QB4usEGJ9aBB7ucPrg2fvoKQh8jW6wQnYYTdFsQ6Gg2uVPPLgWt1pzaKVa6zeTmfv3j2XLefxByh",
+        "SvjayKidE9SGRX2E5dJWdQbhVfq4nf4tQJkUQ5bBUdgALqiUewJfWQwbmptDEmKqeqc4tRb26duxe3483w2RZRXQ2MPKDzw3a",
+        "SvkKGjieJuuMgxyCC3nXJUJDj2CuibeFRL6qan46zw8NCRMPyRtwehjjYG2qqekuUnCW5zmeu27fBLqn1xkQFRkc1wzscXzvo",
+        "Svk7VUPASsbZhFErf8rEfuEEX94GWsSWKVS8GNAUDfH363EsSLZ58wd3rph8okcaFALthwMkQ4fWJBzYYjqA3Lk61McroQbno",
+        "Svk7VUPASsbZhFErf8rEfuEEX94GWsSWKVS8GNAUDfH363EsSLZ58wd3rph8okcaFALthwMkQ4fWJBzYYjqA3Lk61McroQbno",
+        "Svk7Uv5WsovHiooYMa9jtcSdgKJcBztLE5n8A8HSp7s8UXnMdVoNLBf2tKchEqW4Ma6wW27Rb2ntPQqrFZT26hhE25fenVvyp",
+        "SvmCQeq1VL2GxLpQznvwF7eHCYd77j9V32fmVVzcfDUSJ4VU3sb5riBdCVYZmk3oVF4b6wqRhPbAbf5oWTC9EFUY16XcZ75cL",
+        "SvkKRajEKEnhEUWFXMrHFdRxE7vmYJaifTRoGrNyDPksZqxWGm8NeJi6UaFXDbXVaGEVAiVYPHmsyaFNAcq5qGLR1BzriKyiM",
+        "SvkL8FpayF6R4RucZC4L1wcuVFZwPAf52dECSrr2LiViGVGv3YVKnjz9rsfcxkVLJaTaB24JUico23bEjXtpkEMo1eyhRtk6Z",
+        "SvjssTR8XNsRxGZeyFnXj9LvHD5c3EZM8XdquLZoBNjrKHcFN3KCzTR5L3yjTvoFCv9usqd9vFbkaiyqyJFFQw9g2KLoCyL6B",
+        "SvkWYULscDkRuWZwuVAywHjpFMqVA3beZQPPVDBUiE6YUFwVL4LqTY348Yazdwwa6VbhhBLKTW295T5bPbizzF9837VDwp4bU"
     };
 
-    /* Initialize for epee HTTP client */
-    epee::net_utils::http::http_simple_client client;
-    epee::net_utils::http::url_content uC;
+
+    const CheckPointListType diardi::offline_checkpoints_mainnet = {
+        {0, {"3fa5c8976978f52ad7d8fc3663e902a229a232ef987fc11ca99628366652ba99", "0x1"}},
+        {5, {"a9809cce2003e1e27ed2673510dfb5a7b9432d24f656aa71a9cb76612e8f2646", "0x8"}},
+        {10000, {"4a220652f8fb723d1d627022b2fd556132d51915ad4f78964fda4ec071b89504","0x59850cb4947"}},
+        {100000, {"d672d95b60d38f19c453cd80bb7a988254294b43c6ef3df62c57c771f1898f9e","0x29e93d705e6f"}},
+        {150000, {"f83b8df79592aae7e2af08a443e55ef6080d598c852bdf14ffbed9875d30b309","0x5467acab0a47"}},
+        {200000, {"880f163d881a4469877331cf02db4d54a0f34cae91e299a126dd2c326573a2d5","0xc6bb7244192e"}},
+        {250000, {"6609b3b3a669cc870057d1aec263d6dcef823a0267ec907b5c883a7dfe4ef422","0x1465fc61b2db1"}},
+        {300000, {"865d5004f3310a45f02618deb008cc8c797eb9905dbc523bcf5f418424bd6e13","0x1aa4090e31978"}},
+        {350000, {"5b10177fa79463be1e7ee34e8e6ed604578c969ec2006f33a67903f760635c97","0x202ba7b5d263b"}},
+    };
+
+    const CheckPointListType diardi::offline_checkpoints_testnet = {};
+    const CheckPointListType diardi::offline_checkpoints_stagenet = {};
 
     //---------------------------------------------------------------------------
     diardi::diardi()
     {}
     //---------------------------------------------------------------------------
-    bool diardi::getRequest(std::string& requestUrl, std::string& response){
-        if (!epee::net_utils::parse_url(requestUrl, uC)){
-            LOG_PRINT_L0("Failed to parse URL for diardi node " << requestUrl);
-            return false;
-        }
+    std::string diardi::get_download_path(cryptonote::network_type nettype) {
+        boost::filesystem::path ipfs_path = tools::get_default_data_dir(true);
+        std::string ipfs_path_str = ipfs_path.string();
 
-        if (uC.host.empty()){
-			LOG_PRINT_L0("Failed to determine address from URL " << requestUrl);
-            return false;
-        }
-
-        epee::net_utils::ssl_support_t ssl_requirement = uC.schema == "https" ? epee::net_utils::ssl_support_t::e_ssl_support_enabled : epee::net_utils::ssl_support_t::e_ssl_support_disabled;
-        uint16_t port = uC.port ? uC.port : ssl_requirement == epee::net_utils::ssl_support_t::e_ssl_support_enabled ? 443 : 80;
-        client.set_server(uC.host, std::to_string(port), boost::none, ssl_requirement);
-
-        epee::net_utils::http::fields_list fields;
-        const epee::net_utils::http::http_response_info *info = NULL;
-        
-        if (!client.invoke_get(uC.uri, std::chrono::seconds(20), "", &info, fields)){
-            return false;
-        }else{
-            response = std::string(info->m_body);
-            return true;
-        }
+        return ipfs_path_str;
     }
     //---------------------------------------------------------------------------
-    CheckPointListType diardi::getHistoricalCheckpoints(bool ipfsDisabled){
-        CheckPointListType m;
+    CheckPointListType diardi::get_historical_checkpoints(bool ipfsDisabled, cryptonote::network_type nettype){
+        CheckPointListType checkpoint_list;
+        /* Remove network type check later */
+        if(!ipfsDisabled && nettype == cryptonote::network_type::MAINNET) {
+            std::string file_name = 
+            (nettype == cryptonote::network_type::MAINNET) ? 
+            "checkpoints_historical_mainnet.json" : 
+            (nettype == cryptonote::network_type::TESTNET) ?
+            "checkpoints_testnet.json" :
+            "checkpoints_stagenet.json";
 
+            std::string download_path; 
+            #ifdef WIN32
+                download_path = diardi::get_download_path(nettype) + "\\" + file_name;
+            #else
+                download_path = diardi::get_download_path(nettype) + "/" + file_name;
+            #endif
 
-        std::string requestUrl = (ipfsDisabled == true) ? (fallBackHistorical) : (localGatewayIPNS + staticCheckpointsName);
-        std::string response;
-        bool tryRequest;
+            const char* ipns_path = (nettype == cryptonote::network_type::MAINNET) ?
+            checkpoints_ipns_name_mainnet.data() : 
+            (nettype == cryptonote::network_type::TESTNET) ?
+            checkpoints_ipns_name_testnet.data() :
+            checkpoints_ipns_name_stagenet.data();
 
-        if(ipfsDisabled == false){
-            tryRequest = getRequest(requestUrl, response);
-        }else{
-            try{
-                http::Request request{requestUrl};
-                const auto responseH = request.send("GET");
-                response = std::string{responseH.body.begin(), responseH.body.end()};
-                tryRequest = true;
-            }catch(...){
-                tryRequest = false;
-            }
-        }
+            char* ipfs_path = diardi::resolve_ipns(ipns_path);
 
-        if(!tryRequest){
-            LOG_PRINT_L0("Unable to get static list of checkpoints from IPFS");
-        }else{
-            try{
-               Document checkpointsJson;
-               checkpointsJson.Parse(response.c_str());
+            Document ipns_path_doc;
+            ipns_path_doc.Parse(ipfs_path);
+            std::string ipfs_parsed = ipns_path_doc["Message"].GetString();
+            std::string ipfs_hash = ipfs_parsed.erase(0,6); /* remove "/ipfs/" */
+            char* res_get = download_ipfs_file(ipfs_hash.data(), download_path.data());
+             
+            std::ifstream checkpoint_fs(download_path.data());
+            IStreamWrapper isw(checkpoint_fs);
+            Document checkpoint_stream_doc;
+            checkpoint_stream_doc.ParseStream(isw);
 
-                for (rapidjson::Value::ConstValueIterator itr = checkpointsJson.Begin(); itr != checkpointsJson.End(); ++itr) {
-                    if (itr->HasMember("height")) {
-                        uint64_t height = (*itr)["height"].GetInt64();
-                        std::stringstream hD;
-                        hD << (*itr)["hash"].GetString() << ":" << (*itr)["c_difficulty"].GetString();
-                        m.insert({height, hD.str()});
-                    }
+            for (rapidjson::Value::ConstValueIterator itr = checkpoint_stream_doc.Begin();
+            itr != checkpoint_stream_doc.End(); 
+            ++itr) {
+                if (itr->HasMember("height")) {
+                    uint64_t height = (*itr)["height"].GetInt64();
+                    std::string hash = (*itr)["hash"].GetString();
+                    std::string difficulty = (*itr)["c_difficulty"].GetString();
+
+                    checkpoint_list.insert(std::make_pair(height, std::make_pair(hash, difficulty)));
                 }
             }
-            catch(...){
-                m.insert({0, "3fa5c8976978f52ad7d8fc3663e902a229a232ef987fc11ca99628366652ba99:0x1"});
+
+            return checkpoint_list;
+        } else {
+            switch(nettype) {
+                case cryptonote::network_type::MAINNET:
+                    return diardi::offline_checkpoints_mainnet;
+                case cryptonote::network_type::TESTNET:
+                    return diardi::offline_checkpoints_testnet;
+                case cryptonote::network_type::STAGENET:
+                    return diardi::offline_checkpoints_stagenet;
+                default:
+                    return {};
             }
         }
-        return m;
     }
     //---------------------------------------------------------------------------
-    std::string diardi::getMajority(std::vector<std::string> &checkpoints)
-    {
-        uint64_t majIndex = 0;
-        uint64_t count = 1;
-        uint64_t vecSize = checkpoints.size();
+    std::string diardi::get_diardi_maintainer_pre_v8(uint64_t height){
+        std::vector<std::string>::const_iterator it = diardi::diardi_v1_addresses.begin();
 
-         for(uint64_t i = 1; i < vecSize; i++)
-         {
-                if(checkpoints[i]==checkpoints[majIndex])
-                {
-                    count++;
-                }
-                else
-                {
-                    count--;
-                }
-                if(count == 0)
-                {
-                    majIndex = i;
-                    count = 1;
-                }
-         }
-        return checkpoints[majIndex];
-    }
-    //---------------------------------------------------------------------------
-    bool diardi::checkMajority(std::vector<std::string> &checkpoints, std::string& checkpoint)
-    {
-          uint64_t count = 0;
-          uint64_t vecSize = checkpoints.size();
-
-          for(uint64_t i = 0; i < vecSize; i++)
-          {
-                if(checkpoints[i] == checkpoint)
-                {
-                    count++;
-                }
-          }
-
-          if(count > (vecSize/2)){
-              return true;
-          }
-
-          else
-          {
-              return false;
-          }
-    }
-    //---------------------------------------------------------------------------
-    bool diardi::getLatestCheckpoint(std::string& checkpoint)
-    {
-        std::vector<std::string> responses;
-
-        for (auto &node: diardi::notaryNodes) {
-            std::string requestUrl = (localGatewayIPNS + node + "/latestCheckpoint.json");
-            std::string response;
-
-            bool tryRequest = getRequest(requestUrl, response);
-            if(!tryRequest){
-                return false;
-            }else{
-                responses.push_back(response);
-            }
+        if((height % 16) == 0){
+            std::advance(it, 15);
+        }else {
+            std::advance(it, (height % 16) - 1);
         }
-
-        std::string mFcheckpoint = getMajority(responses);
-        bool isMajority = checkMajority(responses, mFcheckpoint);
-
-        if(isMajority){
-            LOG_PRINT_L1("Most prevalent checkpoint is " << mFcheckpoint);
-            checkpoint = mFcheckpoint;
-            return true;
-        }
-
-        LOG_PRINT_L0("Skip checkpointing, since no checkpoint was prevalent enough");
-        return false;
+        return *it;
     }
     //---------------------------------------------------------------------------
+
 }

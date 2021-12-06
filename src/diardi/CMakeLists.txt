@@ -61,4 +61,6 @@ target_link_libraries(diardi
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
   PRIVATE
-    ${EXTRA_LIBRARIES})
+    ${LIBIPFS}
+    ${EXTRA_LIBRARIES}
+    common)

@@ -319,12 +319,8 @@ namespace cryptonote
     }
     else if (time(NULL) - m_last_diardi_checkpoints_update >= 240) /* Update from diardi every 4 minutes */
     {
-        if(!m_disable_ipfs){
-          bool addDiardi = m_checkpointsO.insert_latest_diardi_checkpoint();
-          if(!addDiardi){
-            LOG_PRINT_L1("Adding latest checkpoint from diardi failed");
-          }
-        m_last_diardi_checkpoints_update = time(NULL);
+      if(!m_disable_ipfs){
+          m_last_diardi_checkpoints_update = time(NULL);
       }
     }
 
@@ -407,10 +403,10 @@ namespace cryptonote
 
     m_disable_ipfs = command_line::get_arg(vm, arg_disable_ipfs);
     m_ipfs_data_dir = command_line::get_arg(vm, arg_ipfs_data_dir);
-
+    cryptonote::checkpoints checkpoints;
+    
     if (m_nettype == MAINNET)
     {
-      cryptonote::checkpoints checkpoints;
       if (!checkpoints.init_default_checkpoints(m_nettype, m_disable_ipfs))
       {
         throw std::runtime_error("Failed to initialize checkpoints");
@@ -421,6 +417,14 @@ namespace cryptonote
       boost::filesystem::path checkpoint_json_hashfile_fullpath = data_dir / json;
 
       set_checkpoints_file_path(checkpoint_json_hashfile_fullpath.string());
+    }
+
+    if(m_nettype == STAGENET)
+    {
+      if (!checkpoints.init_default_checkpoints(m_nettype, m_disable_ipfs))
+      {
+        throw std::runtime_error("Failed to initialize checkpoints");
+      }
     }
 
 

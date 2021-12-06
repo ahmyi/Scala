@@ -66,5 +66,6 @@ target_link_libraries(cryptonote_core
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
+    diardi
   PRIVATE
     ${EXTRA_LIBRARIES})

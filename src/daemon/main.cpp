@@ -296,28 +296,37 @@ int main(int argc, char const * argv[])
     MGINFO("Scala '" << SCALA_RELEASE_NAME << "' (v" << SCALA_VERSION_FULL << ")");
     const char *asciiArt = R""""(
 
- ,\/~~~\_                            _/~~~~\
- |  ---, `\_    ___,-------~~\__  /~' ,,''  |
- | `~`, ',,\`-~~--_____    ---  - /, ,--/ '/'
-  `\_|\ _\`    ______,---~~~\  ,_   '\_/' /'
-    \,_|   , '~,/'~   /~\ ,_  `\_\ \_  \_\'
-    ,/   /' ,/' _,-'~~  `\  ~~\_ ,_  `\  `\
-  /@@ _/  /' ./',-                 \       `@,
-  @@ '   |  ___/  /'  /  \  \ '\__ _`~|, `, @@
-/@@ /  | | ',___  |  |    `  | ,,---,  |  | `@@,
-@@@ \  | | \ \O_`\ |        / / O_/' | \  \  @@@
-@@@ |  | `| '   ~ / ,          ~     /  |    @@@
-`@@ |   \ `\     ` |         | |  _/'  /'  | @@'
- @@ |    ~\ /--'~  |       , |  \__   |    | |@@
- @@, \     | ,,|   |       ,,|   | `\     /',@@
- `@@, ~\   \ '     |       / /    `' '   / ,@@
-  @@@,    \    ~~\ `\/~---'~/' _ /'~~~~~~~~--,_
-   `@@@_,---::::::=  `-,| ,~  _=:::::''''''    `
-   ,/~~_---'_,-___     _-__  ' -~~~\_```---
-     ~`   ~~_/'// _,--~\_/ '~--, |\_
-          /' /'| `@@@@@,,,,,@@@@  | \
-               `     `@@@@@@'
-  Artwork by Chev
+WWMMMMMMWWNKOOkddxkxxxk0KXNWWWWWWWWWWWWW
+WMMMMMMWXkl::;,.,colllloooddkKNMMMMWMMMW
+WMMMMWKd,..';'...,;:::ccc:,'.,ckNMMMWMMW
+WMMMNk;...,col:;:;,'..''.......'dXWWWMWW
+WMWXd...;ok0KXXXKKOkxxdddoo:'...'dNWWWWW
+WWNd. ..cdk0XXNNNNNNNNNNNNXKkl'..'xNWWWW
+WWO,   .:ok0KXXXXXXXXXXXXXXXX0l'..;0WWWW
+W0:.   .:x0KXXXXXXXXXXXXXKKKK0x;...lXWWW
+Nx.   .,clddk0KXXXXXXXXXXXXXK0x:....dXWW
+WXo'....',,,,:lx0K0kxxddkOKXXKx:...'dXWW
+WWO;..,,;;:ldoloKNKdccccodk0KXk;...lXWWW
+WWk;'';ldxOKX0xkXWNK0000KKK0KN0lccl0WWWW
+WWNOc',:oddxOkx0NWWWWWNNNWWWWNOk0OONWWWW
+WWWWO:',;cokko:lOXKXNWWWWWWWWK0XNNNWWWWW
+WWWWNo'';:okxc'';okKNWWWWWNXKKNWWWWWMWWW
+WWMWWk,..',;;,,;:ldkOO0KK0kxdONWWWMWWWWW
+WWWWWXc.......':oddl:;;:::;;c0WMMWMWWMWW
+WWWWXx,........:odool:'...';xNWMWWWWWMWW
+WN0x:.........':cloll:,,'',:OWWWWWWWWMWW
+l;'..........,cllcc:;,''',;oKWWWWWWWWMWW
+.............';,'........';oOKNWWWWWWWWW
+..............''.........,,.';cox0XWWMWW
+...............''..''...........',:okKWW
+.........................'.......''',:dO
+........................;l:........'',;;
+........................,;'.........''''
+...''...................'.......''....''
+....,,...........................,,....'
+
+
+Artwork by Hayzam
 )"""";
 
     MGINFO(asciiArt);

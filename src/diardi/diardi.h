@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020, The Scala Project
+// Copyright (c) 2018-2021, The Scala Project
 //
 // All rights reserved.
 //
@@ -30,17 +30,33 @@
 
 #pragma once
 
+#include <boost/filesystem.hpp>
 #include <algorithm>
 #include <map>
-#include <chrono>
+#include <vector>
+#include <string>
+#include <fstream>
+
+#include "common/util.h"
 #include "misc_log_ex.h"
 #include "crypto/hash.h"
 #include "cryptonote_config.h"
 #include "net/http_client.h"
 #include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    #include "libipfs/include/libipfs-windows.h"
+#elif  defined(__APPLE__)
+    #include "libipfs/include/libipfs-macos.h"
+#else
+    #include "libipfs/include/libipfs-linux.h"
+#endif
 
 using namespace rapidjson;
-typedef std::map<uint64_t, std::string> CheckPointListType;
+using namespace std::chrono_literals;
+
+typedef std::map<uint64_t, std::pair<std::string, std::string>> CheckPointListType;
 
 namespace cryptonote
 {
@@ -58,81 +74,76 @@ namespace cryptonote
          * @brief default constructor
         */
         diardi();
-
         /**
          * @brief Get a large list of historical static checkpoints from IPFS
          *
          * @param ipfsDisabled whether the local IPFS node is disabled or not
+         * @param nettype the network type
          *
          * @return a map of type CheckPointListType which contains all the checkpoints
          *
          *
         */
 
-        CheckPointListType getHistoricalCheckpoints(bool ipfsDisabled);
+        CheckPointListType get_historical_checkpoints(bool ipfsDisabled, cryptonote::network_type nettype);
 
         /**
-         * @brief Get the latest checkpoint from all diardi nodes
+         * @brief Get a diardi maintainers address, pre V8
          *
-         * @param checkpoint if the request is a success this will contain the valid checkpoint that can be inserted by the daemon
+         * @param height the height for which the maintainer address is needed
          *
-         * @return false if the checkpoints are bad or if the requests fail.
-         *         true if the requests succeeds.
+         * @return string containing the address
+         *
+         *
+        */
+       
+        std::string get_diardi_maintainer_pre_v8(uint64_t height);
+
+        /**
+         * @brief Resolve an IPNS name
+         *
+         * @param ipns_name the IPNS name to resolve
+         *
+         * @return string containing the IPFS hash
+         *
          *
         */
 
-        bool getLatestCheckpoint(std::string& checkpoint);
+        char* resolve_ipns(const char* ipns_name) {
+          char* ipfs_path = ResolveIPNSName((char*)ipns_name);
+          return ipfs_path;
+        }
+
+        static char* download_ipfs_file(const char* ipfs_hash, const char* download_path) {
+          char* run_get = IpfsGet((char*)ipfs_hash, (char*)download_path);
+          return run_get;
+        }
+
+        static const std::vector<std::string> diardi_v1_addresses;
 
       private:
-
         /**
-         * @brief Send a GET request
+         * @brief Get downaload path diardi files
          *
-         * @param url the url of the request to be sent
-         * @param response this will contain the response from the server
          *
-         * @return false if the request fails.
-         *         true if the request succeeds.
-         *
-        */
-
-        bool getRequest(std::string& url, std::string& response);
-
-        /**
-         * @brief Find element that occurs more than n/2 times in a vector
-         *
-         * @param checkpoints the vector that contains all the checkpoints
-         *
-         * @return std::string of the most frequent checkpoint
+         * @return a char pointer to the path
          *
          *
         */
 
-        std::string getMajority(std::vector<std::string> &checkpoints);
+        std::string get_download_path(cryptonote::network_type nettype);
 
+        static const std::vector<std::string> offline_seed_list;
+        static const std::vector<std::string> offline_ban_list;
+        static const std::string seed_list_ipns_name;
+        static const std::string ban_list_ipns_name;
 
-        /**
-         * @brief Check if a given element occurs more than n/2 times in a vector
-         *
-         * @param checkpoints the vector that contains all the checkpoints
-         * @param checkpoint the std::string to check against
-         *
-         * @return true or false depending on if it does occur n/2 times or not
-         *
-         *
-        */
+        static const std::string checkpoints_ipns_name_mainnet;
+        static const std::string checkpoints_ipns_name_testnet;
+        static const std::string checkpoints_ipns_name_stagenet;
 
-        bool checkMajority(std::vector<std::string> &checkpoints, std::string& checkpoint);
-
-        static const std::vector<std::string> offlineSeedList;
-        static const std::vector<std::string> offlineBansList;
-        static const std::string seedsName;
-        static const std::string bansName;
-        static const std::string staticCheckpointsName;
-        static const std::string fallBackHistorical;
-        static const std::string localGatewayIPNS;
-        static const std::string localGatewayIPFS;
-        static const std::string errorDat;
-        static const std::vector<std::string> notaryNodes;
+        static const CheckPointListType offline_checkpoints_mainnet;
+        static const CheckPointListType offline_checkpoints_testnet;
+        static const CheckPointListType offline_checkpoints_stagenet;
   };
 }

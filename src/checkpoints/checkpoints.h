@@ -158,13 +158,6 @@ namespace cryptonote
     bool check_for_conflicts(const checkpoints& other) const;
 
     /**
-     * @brief Inserts the latest checkpoint from Diardi
-     *
-     * @return true unless adding a checkpoint fails
-     */
-    bool insert_latest_diardi_checkpoint();
-
-    /**
      * @brief loads the default main chain checkpoints
      * @param nettype network type
      * @param ipfsDisabled ipfs disabled or not

@@ -71,9 +71,7 @@ namespace cryptonote
         END_KV_SERIALIZE_MAP()
   };
 
-  diardi diardiObj;
-
-
+  diardi diardi_object;
 
   //---------------------------------------------------------------------------
   checkpoints::checkpoints()
@@ -186,51 +184,13 @@ namespace cryptonote
     return true;
   }
 
-  bool checkpoints::insert_latest_diardi_checkpoint()
-  {
-    std::string respndedCheckpoint;
-    bool getCheckpoint = diardiObj.getLatestCheckpoint(respndedCheckpoint);
-    
-    if(getCheckpoint)
-    {
-      Document jsonCheckpoint;
-      jsonCheckpoint.Parse(respndedCheckpoint.c_str());
-      
-      uint64_t height = jsonCheckpoint["height"].GetUint64();
-      std::string hash = jsonCheckpoint["hash"].GetString();
-      std::string difficulty = jsonCheckpoint["difficulty"].GetString();
-
-      ADD_CHECKPOINT(height, hash);
-      LOG_PRINT_L1("Inserted checkpoint for height " << height << " from diardi");
-      return true;
-    }
-    return false;
-  }
-
   bool checkpoints::init_default_checkpoints(network_type nettype, bool ipfsDisabled)
   {
-    if (nettype == TESTNET)
+    CheckPointListType historical_checkpoints = diardi_object.get_historical_checkpoints(ipfsDisabled, nettype);
+    MGINFO("Inserting historical checkpoints");
+    for (auto& checkpoint : historical_checkpoints)
     {
-      ADD_CHECKPOINT(1, "50370cbee5b778e21581fe07d23abf706fd1bbab3119ad372aeaacb7d12f3620");
-      ADD_CHECKPOINT(100, "b70e20e7f9bd98e775b1d959d1b8192c87e80614642ff8dc51c37c236b58b2a6");
-      ADD_CHECKPOINT(130, "e8b299d37367bc10775e16d000d9ac1fa23ececedf03958e47e4b65fca11f1bd")
-      return true;
-    }
-    if (nettype == STAGENET)
-    {
-      return true;
-    }
-
-    CheckPointListType historicalCheckpointMap = diardiObj.getHistoricalCheckpoints(ipfsDisabled);
-    for(CheckPointListType::iterator iter = historicalCheckpointMap.begin(); iter != historicalCheckpointMap.end(); ++iter)
-    {
-      uint64_t height =  iter->first;
-      std::string hD =  iter->second;
-      
-      std::vector<std::string> hDs;
-      boost::split(hDs, hD, boost::is_any_of(":"));
-
-      ADD_CHECKPOINT2(height, hDs[0], hDs[1]);
+      ADD_CHECKPOINT(checkpoint.first, checkpoint.second.first);
     }
     return true;
   }
@@ -259,11 +219,11 @@ namespace cryptonote
       uint64_t height;
       height = it->height;
       if (height <= prev_max_height) {
-	LOG_PRINT_L1("ignoring checkpoint height " << height);
+	      LOG_PRINT_L1("ignoring checkpoint height " << height);
       } else {
-	std::string blockhash = it->hash;
-	LOG_PRINT_L1("Adding checkpoint height " << height << ", hash=" << blockhash);
-	ADD_CHECKPOINT(height, blockhash);
+	      std::string blockhash = it->hash;
+	      LOG_PRINT_L1("Adding checkpoint height " << height << ", hash=" << blockhash);
+	      ADD_CHECKPOINT(height, blockhash);
       }
       ++it;
     }
@@ -277,9 +237,7 @@ namespace cryptonote
 
     // All four scalapulse domains have DNSSEC on and valid
     static const std::vector<std::string> dns_urls = {"checkpoints-pulse.scalaproject.io"};
-
     static const std::vector<std::string> testnet_dns_urls = {"testpoints-pulse.scalaproject.io"};
-
     static const std::vector<std::string> stagenet_dns_urls = {"stagepoint-pulse.scalaproject.io"};
 
     if (!tools::dns_utils::load_txt_records_from_dns(records, nettype == TESTNET ? testnet_dns_urls : nettype == STAGENET ? stagenet_dns_urls : dns_urls))
@@ -298,7 +256,7 @@ namespace cryptonote
         std::stringstream ss(record.substr(0, pos));
         if (!(ss >> height))
         {
-    continue;
+          continue;
         }
 
         // parse the second part as crypto::hash,
@@ -306,7 +264,7 @@ namespace cryptonote
         std::string hashStr = record.substr(pos + 1);
         if (!epee::string_tools::hex_to_pod(hashStr, hash))
         {
-    continue;
+          continue;
         }
 
         ADD_CHECKPOINT(height, hashStr);

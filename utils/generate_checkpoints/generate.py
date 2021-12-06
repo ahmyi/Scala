@@ -2,11 +2,9 @@ import requests
 import math
 import json
 import os
-import ipfsApi
 
-ipfs_api = ipfsApi.Client("https://ipfs.infura.io", 5001)
 checkpoints_filename = "checkpoints.json"
-scala_node = "http://localhost:11812/json_rpc"
+scala_node = "http://mine.scalaproject.io:8000/json_rpc"
 
 headers = {
     'Content-Type': 'application/json',
@@ -65,6 +63,3 @@ with open(checkpoints_filename, 'w') as outfile:
     json.dump(finJson, outfile)
 
 print("========================================================")
-
-resIpfs = ipfs_api.add(checkpoints_filename)
-print("Checkpoints uploaded to IPFS, hash is = ", resIpfs['Hash'])

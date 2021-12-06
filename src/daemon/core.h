@@ -90,7 +90,7 @@ public:
       Document startMessage;
       startMessage.Parse(IPFSstartMessage);
       std::string parsedMessage = startMessage["Message"].GetString();
-      std::chrono::seconds ipfsWaitDuration(20);
+      std::chrono::seconds ipfsWaitDuration(5);
 
       if ((parsedMessage.find("started on port") != std::string::npos)) {
         MGINFO("Initialized new IPFS daemon...");
@@ -110,7 +110,6 @@ public:
       MGINFO("Not starting IPFS daemon...");
     }
 
-    Document startMessage;
     #if defined(PER_BLOCK_CHECKPOINT)
         const cryptonote::GetCheckpointsCallback& get_checkpoints = blocks::GetCheckpointsData;
     #else
