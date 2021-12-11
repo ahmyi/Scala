@@ -27,8 +27,9 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 if(APPLE)
+  list(APPEND EXTRA_LIBRARIES "-framework Foundation -framework ApplicationServices -framework AppKit -framework CoreFoundation -framework Security")
   if(DEPENDS)
-    list(APPEND EXTRA_LIBRARIES "-framework Foundation -framework ApplicationServices -framework AppKit -framework IOKit")
+    list(APPEND EXTRA_LIBRARIES "-framework IOKit")
   else()
     find_library(IOKIT_LIBRARY IOKit)
     mark_as_advanced(IOKIT_LIBRARY)
