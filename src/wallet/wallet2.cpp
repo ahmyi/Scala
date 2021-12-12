@@ -1379,7 +1379,7 @@ bool wallet2::set_proxy(const std::string &address)
 bool wallet2::init(std::string daemon_address, boost::optional<epee::net_utils::http::login> daemon_login, const std::string &proxy_address, uint64_t upper_transaction_weight_limit, bool trusted_daemon, epee::net_utils::ssl_options_t ssl_options)
 {
   CHECK_AND_ASSERT_MES(set_proxy(proxy_address), false, "failed to set proxy address");
-  m_checkpoints.init_default_checkpoints(m_nettype);
+  m_checkpoints.init_default_checkpoints(m_nettype, false);
   m_is_initialized = true;
   m_upper_transaction_weight_limit = upper_transaction_weight_limit;
   return set_daemon(daemon_address, daemon_login, trusted_daemon, std::move(ssl_options));

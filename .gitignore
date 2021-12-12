@@ -111,3 +111,5 @@ nbproject
 /testnet
 
 __pycache__/
+external/libipfs/*
+!external/libipfs/.gitkeep

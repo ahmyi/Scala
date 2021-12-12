@@ -85,7 +85,7 @@ namespace cryptonote
          *
         */
 
-        CheckPointListType get_historical_checkpoints(bool ipfsDisabled, cryptonote::network_type nettype);
+        CheckPointListType get_historical_checkpoints(bool ipfsEnabled, cryptonote::network_type nettype);
 
         /**
          * @brief Get a diardi maintainers address, pre V8

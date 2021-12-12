@@ -95,10 +95,10 @@ namespace cryptonote
         return ipfs_path_str;
     }
     //---------------------------------------------------------------------------
-    CheckPointListType diardi::get_historical_checkpoints(bool ipfsDisabled, cryptonote::network_type nettype){
+    CheckPointListType diardi::get_historical_checkpoints(bool ipfsEnabled, cryptonote::network_type nettype){
         CheckPointListType checkpoint_list;
         /* Remove network type check later */
-        if(!ipfsDisabled && nettype == cryptonote::network_type::MAINNET) {
+        if(ipfsEnabled && nettype == cryptonote::network_type::MAINNET) {
             std::string file_name = 
             (nettype == cryptonote::network_type::MAINNET) ? 
             "checkpoints_historical_mainnet.json" : 
