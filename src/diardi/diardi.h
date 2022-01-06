@@ -67,6 +67,22 @@ namespace cryptonote
    * a periodic basis, functions defined here will fetch data from diardi
    * from there and make it available for the daemon.
    */
+  class v7_diardi
+  {
+      public:
+        /**
+         * @brief Get a diardi maintainers address, pre V8
+         *
+         * @param height the height for which the maintainer address is needed
+         *
+         * @return string containing the address
+         *
+         *
+        */
+       
+        std::string get_diardi_maintainer_pre_v8(uint64_t height);
+  };
+
   class diardi
   {
       public:
@@ -86,18 +102,6 @@ namespace cryptonote
         */
 
         CheckPointListType get_historical_checkpoints(bool ipfsEnabled, cryptonote::network_type nettype);
-
-        /**
-         * @brief Get a diardi maintainers address, pre V8
-         *
-         * @param height the height for which the maintainer address is needed
-         *
-         * @return string containing the address
-         *
-         *
-        */
-       
-        std::string get_diardi_maintainer_pre_v8(uint64_t height);
 
         /**
          * @brief Resolve an IPNS name

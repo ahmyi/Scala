@@ -159,7 +159,7 @@ namespace cryptonote
         }
     }
     //---------------------------------------------------------------------------
-    std::string diardi::get_diardi_maintainer_pre_v8(uint64_t height){
+    std::string v7_diardi::get_diardi_maintainer_pre_v8(uint64_t height){
         std::vector<std::string>::const_iterator it = diardi::diardi_v1_addresses.begin();
 
         if((height % 16) == 0){
