@@ -44,7 +44,7 @@ if (IOS)
     INCLUDE(CmakeLists_IOS.txt)
 endif()
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.18)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 project(scala)
