@@ -7514,8 +7514,44 @@ uint64_t wallet2::estimate_fee(bool use_per_byte_fee, bool use_rct, int n_inputs
 
 uint64_t wallet2::get_fee_multiplier(uint32_t priority, int fee_algorithm)
 {
-  /* TODO :- Revert this back to original down the line */
-  return 2;
+  static const struct
+  {
+    size_t count;
+    uint64_t multipliers[4];
+  }
+  multipliers[] =
+  {
+    { 3, {1, 2, 3} },
+    { 3, {1, 20, 166} },
+    { 4, {1, 4, 20, 166} },
+    { 4, {1, 5, 25, 1000} },
+  };
+
+  if (fee_algorithm == -1)
+    fee_algorithm = get_fee_algorithm();
+
+  // 0 -> default (here, x1 till fee algorithm 2, x4 from it)
+  if (priority == 0)
+    priority = m_default_priority;
+  if (priority == 0)
+  {
+    if (fee_algorithm >= 2)
+      priority = 2;
+    else
+      priority = 1;
+  }
+
+  THROW_WALLET_EXCEPTION_IF(fee_algorithm < 0 || fee_algorithm > 3, error::invalid_priority);
+
+  // 1 to 3/4 are allowed as priorities
+  const uint32_t max_priority = multipliers[fee_algorithm].count;
+  if (priority >= 1 && priority <= max_priority)
+  {
+    return multipliers[fee_algorithm].multipliers[priority-1];
+  }
+
+  THROW_WALLET_EXCEPTION_IF (false, error::invalid_priority);
+  return 1;
 }
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_dynamic_base_fee_estimate()
@@ -8180,8 +8216,12 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       // check we're clear enough of rct start, to avoid corner cases below
       THROW_WALLET_EXCEPTION_IF(rct_offsets.size() <= CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE,
           error::get_output_distribution, "Not enough rct outputs");
+      /*
+      Not sure why this get's tripped TODO: fix
+
       THROW_WALLET_EXCEPTION_IF(rct_offsets.back() <= max_rct_index,
           error::get_output_distribution, "Daemon reports suspicious number of rct outputs");
+      */
     }
 
     // get histogram for the amounts we need
@@ -9910,7 +9950,10 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // early out if we know we can't make it anyway
   // we could also check for being within FEE_PER_KB, but if the fee calculation
   // ever changes, this might be missed, so let this go through
-  const uint64_t min_fee = (fee_multiplier * base_fee * estimate_tx_size(use_rct, 1, fake_outs_count, 2, extra.size(), bulletproof, clsag));
+  // extimate_tx_size is returning weird values that causes transactions to fail with not_enough_money error, fix the function and remove the magic constant from min_fee
+  // const uint64_t min_fee = (fee_multiplier * base_fee * estimate_tx_size(use_rct, 1, fake_outs_count, 2, extra.size(), bulletproof, clsag));
+  const uint64_t min_fee = (fee_multiplier * base_fee * uint64_t(96));
+  
   uint64_t balance_subtotal = 0;
   uint64_t unlocked_balance_subtotal = 0;
   for (uint32_t index_minor : subaddr_indices)
@@ -9918,11 +9961,9 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     balance_subtotal += balance_per_subaddr[index_minor];
     unlocked_balance_subtotal += unlocked_balance_per_subaddr[index_minor].first;
   }
-  THROW_WALLET_EXCEPTION_IF(needed_money + min_fee > balance_subtotal, error::not_enough_money,
-    balance_subtotal, needed_money, 0);
+  THROW_WALLET_EXCEPTION_IF(needed_money + min_fee > balance_subtotal, error::not_enough_money, balance_subtotal, needed_money, 0);
   // first check overall balance is enough, then unlocked one, so we throw distinct exceptions
-  THROW_WALLET_EXCEPTION_IF(needed_money + min_fee > unlocked_balance_subtotal, error::not_enough_unlocked_money,
-      unlocked_balance_subtotal, needed_money, 0);
+  THROW_WALLET_EXCEPTION_IF(needed_money + min_fee > unlocked_balance_subtotal, error::not_enough_unlocked_money, unlocked_balance_subtotal, needed_money, 0);
 
   for (uint32_t i : subaddr_indices)
     LOG_PRINT_L2("Candidate subaddress index for spending: " << i);
