@@ -57,6 +57,7 @@ using namespace rapidjson;
 using namespace std::chrono_literals;
 
 typedef std::map<uint64_t, std::pair<std::string, std::string>> CheckPointListType;
+typedef std::map<std::string, std::string> diardi_v2_list;
 
 namespace cryptonote
 {
@@ -124,6 +125,11 @@ namespace cryptonote
         }
 
         static const std::vector<std::string> diardi_v1_addresses;
+        static const diardi_v2_list diardi_v2_addresses;
+
+        std::string get_diardi_maintainer(uint64_t seed);
+
+        uint64_t get_diardi_maintainer_list_size();
 
       private:
         /**

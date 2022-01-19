@@ -68,6 +68,12 @@ namespace cryptonote
         "SvkWYULscDkRuWZwuVAywHjpFMqVA3beZQPPVDBUiE6YUFwVL4LqTY348Yazdwwa6VbhhBLKTW295T5bPbizzF9837VDwp4bU"
     };
 
+    const diardi_v2_list diardi::diardi_v2_addresses = {
+        {"ASIA", "StS1SwGTN7VHw9YXpKenFHhFeXHDz3BzFJ9upQndHXErigKzrNtk1PxPnFYcBUNaSFhTgpFsZBCocaZduYxhWLvj5zuLywcgRu"},
+        {"AFRICA", "StS1Q9SGnivPFK8hhLq6c2ZWcqDmR5KMRJypMmzPm5prRL64ikoxU66RZxQKfkPC9gg8tYPymUzkSVaeENQP7NVG9guwZuUPsP"},
+        {"EUROPE", "StS1BqGW9uDjcQnM2Q8e1Z9JmByAkV4URbFFiGons62dGieZVuzusWZ4FxSsdQKtjZGDSaTUAX8LscJzFu89zNPn5A1jD8v2wJ"}
+    };
+
 
     const CheckPointListType diardi::offline_checkpoints_mainnet = {
         {0, {"3fa5c8976978f52ad7d8fc3663e902a229a232ef987fc11ca99628366652ba99", "0x1"}},
@@ -170,5 +176,14 @@ namespace cryptonote
         return *it;
     }
     //---------------------------------------------------------------------------
-
+    std::string diardi::get_diardi_maintainer(uint64_t index) {
+        diardi_v2_list::const_iterator it = diardi::diardi_v2_addresses.begin();
+        std::advance(it, index);
+        return it->second;
+    }
+    //---------------------------------------------------------------------------
+    uint64_t diardi::get_diardi_maintainer_list_size() {
+        return diardi::diardi_v2_addresses.size();
+    }
+    //---------------------------------------------------------------------------
 }

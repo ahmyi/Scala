@@ -51,6 +51,7 @@ using namespace crypto;
 namespace cryptonote
 {
   v7_diardi diardi_object_tx_utils;
+  diardi n_diardi_object_tx_utils;
   //---------------------------------------------------------------
   void classify_addresses(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, size_t &num_subaddresses, account_public_address &single_dest_subaddress)
   {
@@ -142,8 +143,26 @@ namespace cryptonote
         return correct_key == output_key;
     }
 
+    std::string get_diardi_miner(const Blockchain *pb, uint64_t height)
+    {
+      uint64_t realHeight = height - 1;
+      uint64_t fromHeight = realHeight - 10;
+      uint64_t maintainersLength = (n_diardi_object_tx_utils.get_diardi_maintainer_list_size()) - 1;
+      crypto::hash blk_id = pb->get_block_id_by_height(fromHeight);
+      std::string hex_str = epee::string_tools::pod_to_hex(blk_id).substr(0, 5);
+      uint64_t seed = std::stol(hex_str, nullptr, 16) * 2;
+
+      std::random_device device;
+      std::mt19937 generator(device());
+      std::uniform_int_distribution<uint64_t> distribution(0, maintainersLength);
+      uint64_t picked_miner_index = distribution(generator);
+      std::string gotMiner = n_diardi_object_tx_utils.get_diardi_maintainer(picked_miner_index);
+
+      return gotMiner;
+    }
+
   //---------------------------------------------------------------
-  bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
+  bool construct_miner_tx(const Blockchain *pb, size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
     tx.vin.clear();
     tx.vout.clear();
     tx.extra.clear();
@@ -166,14 +185,14 @@ namespace cryptonote
       return false;
     }
 
-#if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
-    LOG_PRINT_L1("Creating block template: reward " << block_reward <<
-      ", fee " << fee);
-#endif
+    #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
+      LOG_PRINT_L1("Creating block template: reward " << block_reward <<
+        ", fee " << fee);
+    #endif
 
     uint64_t diardi_reward = 0;
 
-    if (height > 15) {
+    if (hard_fork_version < 13) {
         diardi_reward = get_diardi_reward(height, block_reward);
         block_reward -= diardi_reward;
     }
@@ -215,6 +234,8 @@ namespace cryptonote
     }
 
     uint64_t summary_amounts = 0;
+    std::string diardi_miner = get_diardi_miner(pb, height);
+    
     for (size_t no = 0; no < out_amounts.size(); no++)
     {
       crypto::key_derivation derivation = AUTO_VAL_INIT(derivation);
@@ -233,7 +254,7 @@ namespace cryptonote
       out.target = tk;
       tx.vout.push_back(out);
 
-        if (hard_fork_version >= 2 && (height >= 16)) {
+        if ((hard_fork_version >= 2 && hard_fork_version < 13) && (height >= 16)) {
           if (already_generated_coins != 0)
           {
             keypair diardi_key = get_deterministic_keypair_from_height(height);
@@ -262,6 +283,11 @@ namespace cryptonote
 
             CHECK_AND_ASSERT_MES(summary_amounts == (block_reward + diardi_reward), false, "Failed to construct miner tx, summary_amounts = " << summary_amounts << " not equal total block_reward = " << (block_reward + diardi_reward));
           }
+        }
+
+        if (hard_fork_version >= 13) 
+        {
+          LOG_PRINT_L1("Diardi miner: " << diardi_miner);
         }
     }
 

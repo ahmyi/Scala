@@ -101,6 +101,11 @@ namespace cryptonote {
       base_reward = 500000U;
     }
 
+    else if (version < 15){
+      /* TODO CHANGE THIS ON MAINNET */
+      base_reward = 1000000U;
+    }
+
     uint64_t full_reward_zone = get_min_block_weight(version);
 
     //make it soft

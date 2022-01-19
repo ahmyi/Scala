@@ -1350,21 +1350,21 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
     return false;
   }
 
-  if ((version >= 2) && (m_db->height() >= 16)) {
-  std::string diardi_maintainer_address;
-  diardi_maintainer_address = diardi_pre_v8_maintainer(m_db->height());
+  if ((version >= 2 && version < 13) && (m_db->height() >= 16)) {
+      std::string diardi_maintainer_address;
+      diardi_maintainer_address = diardi_pre_v8_maintainer(m_db->height());
 
-  	if (already_generated_coins != 0){
-		uint64_t diardi_reward = get_diardi_reward(m_db->height(), base_reward);
-		if (b.miner_tx.vout.back().amount != diardi_reward){
-		MERROR("Diardi reward amount incorrect.  Should be: " << print_money(diardi_reward) << ", is: " << print_money(b.miner_tx.vout.back().amount));
-		return false;
-		}
-		if (!validate_diardi_reward_key(m_db->height(), diardi_maintainer_address, b.miner_tx.vout.size() - 1, boost::get<txout_to_key>(b.miner_tx.vout.back().target).key)){
-        	MERROR("Diardi reward public key incorrect.");
-        	return false;
-		}
-	 }
+        if (already_generated_coins != 0){
+        uint64_t diardi_reward = get_diardi_reward(m_db->height(), base_reward);
+        if (b.miner_tx.vout.back().amount != diardi_reward){
+        MERROR("Diardi reward amount incorrect.  Should be: " << print_money(diardi_reward) << ", is: " << print_money(b.miner_tx.vout.back().amount));
+        return false;
+        }
+        if (!validate_diardi_reward_key(m_db->height(), diardi_maintainer_address, b.miner_tx.vout.size() - 1, boost::get<txout_to_key>(b.miner_tx.vout.back().target).key)){
+              MERROR("Diardi reward public key incorrect.");
+              return false;
+        }
+      }
   }
   
   if(base_reward + fee < money_in_use)
@@ -1680,7 +1680,7 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
   //make blocks coin-base tx looks close to real coinbase tx to get truthful blob weight
   uint8_t hf_version = b.major_version;
   size_t max_outs = hf_version >= 4 ? 1 : 11;
-  bool r = construct_miner_tx(height, median_weight, already_generated_coins, txs_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
+  bool r = construct_miner_tx(this, height, median_weight, already_generated_coins, txs_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
   CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, first chance");
   size_t cumulative_weight = txs_weight + get_transaction_weight(b.miner_tx);
 #if defined(DEBUG_CREATE_BLOCK_TEMPLATE)
@@ -1689,7 +1689,7 @@ bool Blockchain::create_block_template(block& b, const crypto::hash *from_block,
 #endif
   for (size_t try_count = 0; try_count != 10; ++try_count)
   {
-    r = construct_miner_tx(height, median_weight, already_generated_coins, cumulative_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
+    r = construct_miner_tx(this, height, median_weight, already_generated_coins, cumulative_weight, fee, miner_address, b.miner_tx, ex_nonce, max_outs, hf_version);
 
     CHECK_AND_ASSERT_MES(r, false, "Failed to construct miner tx, second chance");
     size_t coinbase_weight = get_transaction_weight(b.miner_tx);
