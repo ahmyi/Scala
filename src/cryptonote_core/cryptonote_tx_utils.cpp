@@ -125,12 +125,15 @@ namespace cryptonote
       return maintainer;
     }
 
-    bool validate_diardi_reward_key(uint64_t height, const std::string& diardi_wallet_address_str, size_t output_index, const crypto::public_key& output_key)
+    bool validate_diardi_reward_key(uint64_t height, const std::string& diardi_wallet_address_str, size_t output_index, const crypto::public_key& output_key, network_type nettype)
     {
         keypair diardi_key = get_deterministic_keypair_from_height(height);
+        network_type diardi_nettype = (nettype == TESTNET) ? cryptonote::TESTNET : 
+                                      (nettype == STAGENET) ? cryptonote::STAGENET : 
+                                      cryptonote::MAINNET;
 
         cryptonote::address_parse_info diardi_wallet_address;
-        cryptonote::get_account_address_from_str(diardi_wallet_address, cryptonote::MAINNET, diardi_wallet_address_str);
+        cryptonote::get_account_address_from_str(diardi_wallet_address, diardi_nettype, diardi_wallet_address_str);
 
         crypto::public_key correct_key;
 
@@ -142,27 +145,14 @@ namespace cryptonote
 
         return correct_key == output_key;
     }
-
-    std::string get_diardi_miner(const Blockchain *pb, uint64_t height)
-    {
-      uint64_t realHeight = height - 1;
-      uint64_t fromHeight = realHeight - 10;
-      uint64_t maintainersLength = (n_diardi_object_tx_utils.get_diardi_maintainer_list_size()) - 1;
-      crypto::hash blk_id = pb->get_block_id_by_height(fromHeight);
-      std::string hex_str = epee::string_tools::pod_to_hex(blk_id).substr(0, 5);
-      uint64_t seed = std::stol(hex_str, nullptr, 16) * 2;
-
-      std::random_device device;
-      std::mt19937 generator(device());
-      std::uniform_int_distribution<uint64_t> distribution(0, maintainersLength);
-      uint64_t picked_miner_index = distribution(generator);
-      std::string gotMiner = n_diardi_object_tx_utils.get_diardi_maintainer(picked_miner_index);
-
-      return gotMiner;
+  //---------------------------------------------------------------
+    std::list<std::string> get_maintainers_list(network_type nettype) {
+        std::list<std::string> maintainers = n_diardi_object_tx_utils.get_diardi_miner_address_list(nettype);
+        return maintainers;
     }
 
   //---------------------------------------------------------------
-  bool construct_miner_tx(const Blockchain *pb, size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
+  bool construct_miner_tx(const Blockchain *pb, size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version, network_type nettype) {
     tx.vin.clear();
     tx.vout.clear();
     tx.extra.clear();
@@ -234,7 +224,7 @@ namespace cryptonote
     }
 
     uint64_t summary_amounts = 0;
-    std::string diardi_miner = get_diardi_miner(pb, height);
+    //std::string diardi_miner = get_diardi_miner(pb, height);
     
     for (size_t no = 0; no < out_amounts.size(); no++)
     {
@@ -284,11 +274,34 @@ namespace cryptonote
             CHECK_AND_ASSERT_MES(summary_amounts == (block_reward + diardi_reward), false, "Failed to construct miner tx, summary_amounts = " << summary_amounts << " not equal total block_reward = " << (block_reward + diardi_reward));
           }
         }
+    }
 
-        if (hard_fork_version >= 13) 
-        {
-          LOG_PRINT_L1("Diardi miner: " << diardi_miner);
-        }
+    if (hard_fork_version >= 13) 
+    {
+          std::list<std::string> maintainers = 
+          n_diardi_object_tx_utils.get_diardi_miner_address_list(nettype);
+
+          cryptonote::address_parse_info diardi_miner_address;
+          cryptonote::address_parse_info temp_miner_address;
+          std::string sA;
+
+          if(height % 4 == 0) {
+            for(const auto &tA: maintainers) {
+                cryptonote::get_account_address_from_str(temp_miner_address, nettype, tA);
+                 if(temp_miner_address.address.m_view_public_key != miner_address.m_view_public_key){
+                   continue;
+                 } else {
+                    diardi_miner_address = temp_miner_address;
+                    sA = tA;
+                    break;
+                 }
+            }
+
+            if(diardi_miner_address.address.m_view_public_key != miner_address.m_view_public_key) {
+              MERROR("Unknown miner trying to mine diardi block!");
+              return false;
+            }
+          }
     }
 
     if (hard_fork_version >= 4)

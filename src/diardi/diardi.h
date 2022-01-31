@@ -125,11 +125,11 @@ namespace cryptonote
         }
 
         static const std::vector<std::string> diardi_v1_addresses;
-        static const diardi_v2_list diardi_v2_addresses;
+        static const diardi_v2_list diardi_v2_addresses_stagenet;
+        static const diardi_v2_list diardi_v2_addresses_testnet;
+        static const diardi_v2_list diardi_v2_addresses_mainnet;
 
-        std::string get_diardi_maintainer(uint64_t seed);
-
-        uint64_t get_diardi_maintainer_list_size();
+        std::list<std::string> get_diardi_miner_address_list(cryptonote::network_type nettype);
 
       private:
         /**
