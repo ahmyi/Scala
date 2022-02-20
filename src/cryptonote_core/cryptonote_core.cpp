@@ -401,8 +401,6 @@ namespace cryptonote
 
     auto data_dir = boost::filesystem::path(m_config_folder);
 
-    m_disable_ipfs = command_line::get_arg(vm, arg_disable_ipfs);
-    m_ipfs_data_dir = command_line::get_arg(vm, arg_ipfs_data_dir);
     cryptonote::checkpoints checkpoints;
     
     if (m_nettype == MAINNET)
@@ -738,7 +736,9 @@ namespace cryptonote
       MERROR("Error --block-sync-size cannot be greater than " << BLOCKS_SYNCHRONIZING_MAX_COUNT);
 
     MGINFO("Loading checkpoints");
-
+    // update checkpoints refer to m_disable_ipfs
+    m_disable_ipfs = command_line::get_arg(vm, arg_disable_ipfs);
+    m_ipfs_data_dir = command_line::get_arg(vm, arg_ipfs_data_dir);
     // load json & DNS checkpoints, and verify them
     // with respect to what blocks we already have
     const bool skip_dns_checkpoints = !command_line::get_arg(vm, arg_dns_checkpoints);
