@@ -8425,6 +8425,8 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       if (td.m_key_image_known && !td.m_key_image_partial)
       {
         std::vector<uint64_t> ring;
+	// clearing up cache
+	m_ringdb_key = null;
         if (get_ring(get_ringdb_key(), td.m_key_image, ring))
         {
           MINFO("This output has a known ring, reusing (size " << ring.size() << ")");
@@ -8697,6 +8699,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       if (td.m_key_image_known && !td.m_key_image_partial)
       {
         std::vector<uint64_t> ring;
+
         if (get_ring(get_ringdb_key(), td.m_key_image, ring))
         {
           for (uint64_t out: ring)
