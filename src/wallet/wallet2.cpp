@@ -7734,7 +7734,14 @@ bool wallet2::set_ring_database(const std::string &filename)
   }
   return true;
 }
-
+crypto::chacha_key wallet2::get_ringdb_key_force()
+{
+  MINFO("caching ringdb key");
+  crypto::chacha_key key;
+  generate_chacha_key_from_secret_keys(key);
+  m_ringdb_key = key;
+  return *m_ringdb_key;
+}
 crypto::chacha_key wallet2::get_ringdb_key()
 {
   if (!m_ringdb_key)
@@ -8425,9 +8432,8 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       if (td.m_key_image_known && !td.m_key_image_partial)
       {
         std::vector<uint64_t> ring;
-	// clearing up cache
-	m_ringdb_key = null;
-        if (get_ring(get_ringdb_key(), td.m_key_image, ring))
+
+        if (get_ring(get_ringdb_key_force(), td.m_key_image, ring))
         {
           MINFO("This output has a known ring, reusing (size " << ring.size() << ")");
           THROW_WALLET_EXCEPTION_IF(ring.size() > fake_outputs_count + 1, error::wallet_internal_error,
