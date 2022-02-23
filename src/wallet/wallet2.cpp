@@ -7734,14 +7734,7 @@ bool wallet2::set_ring_database(const std::string &filename)
   }
   return true;
 }
-crypto::chacha_key wallet2::get_ringdb_key_force()
-{
-  MINFO("caching ringdb key");
-  crypto::chacha_key key;
-  generate_chacha_key_from_secret_keys(key);
-  m_ringdb_key = key;
-  return *m_ringdb_key;
-}
+
 crypto::chacha_key wallet2::get_ringdb_key()
 {
   if (!m_ringdb_key)
@@ -7880,7 +7873,7 @@ bool wallet2::find_and_save_rings(bool force)
   COMMAND_RPC_GET_TRANSACTIONS::request req = AUTO_VAL_INIT(req);
   COMMAND_RPC_GET_TRANSACTIONS::response res = AUTO_VAL_INIT(res);
 
-  MDEBUG("Finding and saving rings...");
+  MINFO("Finding and saving rings...");
 
   // get payments we made
   std::vector<crypto::hash> txs_hashes;
@@ -8427,20 +8420,37 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
           (requested_outputs_count - recent_outputs_count - pre_fork_outputs_count - post_fork_outputs_count) << " full-chain");
 
       uint64_t num_found = 0;
-
       // if we have a known ring, use it
       if (td.m_key_image_known && !td.m_key_image_partial)
       {
         std::vector<uint64_t> ring;
+        bool own_found = false;
+        if (get_ring(get_ringdb_key(), td.m_key_image, ring))
+        {
+          //Removing checking here as we are just trying to find if we own rings
+          for (const auto &out: ring)
+          {
+            //looking if own is found
+            if (out < num_outs && out == td.m_global_output_index)
+            {
+                own_found = true;
+            }
+          }
+        }
+        //Trying find and get rings that we might of missed out
+        if(!own_found) {
+          MDEBUG("Owning fail. Tring to refresh rings");
+          find_and_save_rings(true);
+        }
 
-        if (get_ring(get_ringdb_key_force(), td.m_key_image, ring))
+        //lets try again if we have own_found no need to get ring
+        if (own_found || get_ring(get_ringdb_key(), td.m_key_image, ring))
         {
           MINFO("This output has a known ring, reusing (size " << ring.size() << ")");
           THROW_WALLET_EXCEPTION_IF(ring.size() > fake_outputs_count + 1, error::wallet_internal_error,
               "An output in this transaction was previously spent on another chain with ring size " +
               std::to_string(ring.size()) + ", it cannot be spent now with ring size " +
               std::to_string(fake_outputs_count + 1) + " as it is smaller: use a higher ring size");
-          bool own_found = false;
           for (const auto &out: ring)
           {
             MINFO("Ring has output " << out);
