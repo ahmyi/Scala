@@ -466,8 +466,7 @@ else()
   set(LIBIPFS_HEADER_NAME "libipfs-windows.h")
   set(LIBIPFS_LIBRARY_NAME "libipfs-windows.a")
 endif()
-
-file(DOWNLOAD "https://github.com/ahmyi/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
+file(DOWNLOAD "https://github.com/ahmyi/libipfs/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
     "${CMAKE_CURRENT_BINARY_DIR}/libipfs-${LIBIPFS_PLATFORM}.zip"
     SHOW_PROGRESS)
 
