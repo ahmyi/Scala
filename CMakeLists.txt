@@ -467,7 +467,7 @@ else()
   set(LIBIPFS_LIBRARY_NAME "libipfs-windows.a")
 endif()
 
-file(DOWNLOAD "https://github.com/scala-network/ahmyi/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
+file(DOWNLOAD "https://github.com/ahmyi/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
     "${CMAKE_CURRENT_BINARY_DIR}/libipfs-${LIBIPFS_PLATFORM}.zip"
     SHOW_PROGRESS)
 
@@ -482,7 +482,7 @@ include_directories(external/rapidjson/include external/easylogging++ src contri
 # Find the libipfs library for each platform
 if(UNIX AND NOT APPLE)
     if(NOT DEPENDS)
-      find_library(LIBIPFS NAMES libipfs-linux PATHS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}" REQUIRED)
+      find_library(LIBIPFS NAMES ipfs-linux PATHS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}" REQUIRED)
     else()
       set(LIBIPFS "${CMAKE_SOURCE_DIR}/external/libipfs/libipfs-${LIBIPFS_PLATFORM}/libipfs-linux.a")
     endif()
