@@ -451,7 +451,7 @@ endif()
 
 # Download and Unzip libipfs
 
-set(LIBIPFS_VERSION "v2.2.0")
+set(LIBIPFS_VERSION "v2.2.1")
 
 if(UNIX AND NOT APPLE)
   set(LIBIPFS_PLATFORM "linux-x64")
@@ -467,7 +467,7 @@ else()
   set(LIBIPFS_LIBRARY_NAME "libipfs-windows.a")
 endif()
 
-file(DOWNLOAD "https://github.com/scala-network/libipfs/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
+file(DOWNLOAD "https://github.com/scala-network/ahmyi/releases/download/${LIBIPFS_VERSION}/libipfs-${LIBIPFS_PLATFORM}.zip"
     "${CMAKE_CURRENT_BINARY_DIR}/libipfs-${LIBIPFS_PLATFORM}.zip"
     SHOW_PROGRESS)
 
