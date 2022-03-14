@@ -26,7 +26,7 @@ since the `usermod` command doesn't affect any existing sessions.
 If you want Mac binaries included in your build, you need to obtain the MacOS SDK:
 
 ```bash
-curl -O https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz
+curl -O https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
 ```
 
 Other User Preparation

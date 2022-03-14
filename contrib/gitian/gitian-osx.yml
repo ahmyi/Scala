@@ -27,7 +27,7 @@ remotes:
 - "url": "https://github.com/scala-project/scala.git"
   "dir": "scala"
 files:
-- "MacOSX10.11.sdk.tar.gz"
+- "MacOSX10.12.sdk.tar.gz"
 script: |
   WRAP_DIR=$HOME/wrapped
   HOSTS="x86_64-apple-darwin11"
@@ -89,7 +89,7 @@ script: |
   BASEPREFIX=`pwd`/contrib/depends
 
   mkdir -p ${BASEPREFIX}/SDKs
-  tar -C ${BASEPREFIX}/SDKs -xf ${BUILD_DIR}/MacOSX10.11.sdk.tar.gz
+  tar -C ${BASEPREFIX}/SDKs -xf ${BUILD_DIR}/MacOSX10.12.sdk.tar.gz
 
   # Build dependencies for each host
   export TAR_OPTIONS=--mtime=2000-01-01T12:00:00
