@@ -1,8 +1,8 @@
 package=libiconv
-$(package)_version=1.15
+$(package)_version=1.16
 $(package)_download_path=https://ftp.gnu.org/gnu/libiconv
 $(package)_file_name=libiconv-$($(package)_version).tar.gz
-$(package)_sha256_hash=ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178
+$(package)_sha256_hash=e6a1b1b589654277ee790cce3734f07876ac4ccfaecbee8afa0b649cf529cc04
 $(package)_patches=fix-whitespace.patch
 
 define $(package)_set_vars
