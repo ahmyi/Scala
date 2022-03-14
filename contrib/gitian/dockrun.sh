@@ -53,8 +53,8 @@ docker build --pull -f ${TAG}.Dockerfile -t $TAG .
 
 cd ..
 docker run -v /var/run/docker.sock:/var/run/docker.sock -d --name gitrun $TAG
-if [ -f MacOSX10.11.sdk.tar.gz ]; then
-  docker cp MacOSX10.11.sdk.tar.gz gitrun:$WORKDIR/builder/inputs/
+if [ -f MacOSX10.12.sdk.tar.gz ]; then
+  docker cp MacOSX10.12.sdk.tar.gz gitrun:$WORKDIR/builder/inputs/
 else
   echo "No MacOS SDK found, Mac builds will be omitted"
 fi

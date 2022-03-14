@@ -171,7 +171,7 @@ Currently working MacOS solution:
 
 ```bash
 curl -O https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX10.12.sdk.tar.xz
-mv MacOSX10.11.sdk.tar.xz builder/inputs
+mv MacOSX10.12.sdk.tar.xz builder/inputs
 ```
 
 To build the most recent tag (pass in `--docker` if using docker):
