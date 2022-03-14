@@ -27,9 +27,9 @@ jobs:
             host: "x86_64-unknown-linux-gnu"
             packages: "gperf cmake python3-zmq libdbus-1-dev libharfbuzz-dev"
           - name: "macOS-x86_64"
-            host: "x86_64-apple-darwin11"
+            host: "x86_64-apple-darwin12"
             packages: "cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
-            osx_sdk: "10.11"
+            osx_sdk: "10.12"
     name: ${{ matrix.toolchain.name }}
     steps:
     - uses: actions/checkout@v1
@@ -62,12 +62,12 @@ jobs:
       run: ${{env.APT_SET_CONF}}
     - name: install dependencies
       run: sudo apt update; sudo apt -y install build-essential libtool cmake autotools-dev automake pkg-config bsdmainutils curl git ca-certificates ccache ${{ matrix.toolchain.packages }}
-    - name: prepare apple-darwin11
-      if: ${{ matrix.toolchain.host == 'x86_64-apple-darwin11' }}
+    - name: prepare apple-darwin12
+      if: ${{ matrix.toolchain.host == 'x86_64-apple-darwin12' }}
       run: |
         mkdir -p contrib/depends/SDKs contrib/depends/sdk-sources
-        if [ ! -f contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.gz ]; then curl --location --fail https://bitcoincore.org/depends-sources/sdks/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.gz -o contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.gz; fi
-        if [ -f contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.gz ]; then tar -C contrib/depends/SDKs -xf contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.gz; fi
+        if [ ! -f contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.xz ]; then curl --location --fail https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.xz -o contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.xz; fi
+        if [ -f contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.xz ]; then tar -C contrib/depends/SDKs -xf contrib/depends/sdk-sources/MacOSX${{ matrix.toolchain.osx_sdk }}.sdk.tar.xz; fi
     - name: prepare w64-mingw32
       if: ${{ matrix.toolchain.host == 'x86_64-w64-mingw32' || matrix.toolchain.host == 'i686-w64-mingw32' }}
       run: |
@@ -78,7 +78,7 @@ jobs:
         ${{env.CCACHE_SETTINGS}}
         make depends target=${{ matrix.toolchain.host }} -j2
     - uses: actions/upload-artifact@v2
-      if: ${{ matrix.toolchain.host == 'x86_64-w64-mingw32' || matrix.toolchain.host == 'x86_64-apple-darwin11' || matrix.toolchain.host == 'x86_64-unknown-linux-gnu' }}
+      if: ${{ matrix.toolchain.host == 'x86_64-w64-mingw32' || matrix.toolchain.host == 'x86_64-apple-darwin12' || matrix.toolchain.host == 'x86_64-unknown-linux-gnu' }}
       with:
         name: ${{ matrix.toolchain.name }}
         path: |
