@@ -47,7 +47,7 @@ jobs:
           - name: "macOS-x86_64"
             host: "x86_64-apple-darwin11"
             packages: "cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
-            osx_sdk: "10.12"
+            osx_sdk: "10.14"
     name: ${{ matrix.toolchain.name }}
     steps:
     - uses: actions/checkout@v1
