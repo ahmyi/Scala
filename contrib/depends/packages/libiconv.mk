@@ -14,8 +14,8 @@ define $(package)_set_vars
 endef
 
 define $(package)_preprocess_cmds
-  cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub build-aux/ &&\
-  patch -p1 < $($(package)_patch_dir)/fix-whitespace.patch
+  cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub build-aux/
+  # &&\ patch -p1 < $($(package)_patch_dir)/fix-whitespace.patch
 endef
 
 define $(package)_config_cmds
